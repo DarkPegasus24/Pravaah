@@ -14,24 +14,149 @@ import {
   Zap,
   ArrowLeft,
   ShieldCheck,
+  CheckCircle2,
+  ChevronRight,
+  User,
+  Clock,
+  Layers,
 } from 'lucide-react';
 import { Button, Input, Card, Badge } from '../components/ui';
 
 export default function Conversations() {
-  // Empty state by default for backend wiring
-  const [conversations, setConversations] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+  // Pre-loaded realistic enterprise threads matching DESIGN.md
+  const [conversations, setConversations] = useState([
+    {
+      id: 'conv-1',
+      name: 'Sarah Jenkins',
+      company: 'Apex Dental Group',
+      channel: 'WhatsApp',
+      channelType: 'whatsapp',
+      status: 'Qualified',
+      statusVariant: 'success',
+      intentScore: 94,
+      unreadCount: 1,
+      autopilotEnabled: true,
+      bant: {
+        budget: '$30,000 - $45,000 ARR',
+        authority: 'Owner / Principal Decision Maker',
+        need: 'Automated 50-Seat Patient Inbound Workflow',
+        timeline: 'Next Month (Q3 Launch)',
+        score: 94,
+      },
+      flowRuleMatched: 'Enterprise Inbound Flow ($30k+)',
+      nextChainedAction: 'Dispatch SOW #SOW-412 & Schedule Onboarding',
+      messages: [
+        {
+          id: 'm-1',
+          sender: 'customer',
+          senderName: 'Sarah Jenkins',
+          text: 'Hi! We operate 6 dental clinics and need an autonomous system for patient inquiries and scheduling. Our budget is around $30,000 - $45,000 ARR.',
+          timestamp: '10:14 AM',
+        },
+        {
+          id: 'm-2',
+          sender: 'ai',
+          senderName: 'PRAVAAH Autopilot',
+          text: 'Hello Sarah! Welcome to Pravaah. We can easily automate intake and multi-calendar scheduling across your 6 clinic locations. Would Thursday at 2:00 PM EST work for an executive architecture demo?',
+          timestamp: '10:15 AM',
+        },
+        {
+          id: 'm-3',
+          sender: 'customer',
+          senderName: 'Sarah Jenkins',
+          text: 'Thursday at 2:00 PM EST is perfect. Please send the invite to sarah@apexdental.com.',
+          timestamp: '10:16 AM',
+        },
+        {
+          id: 'm-4',
+          sender: 'ai',
+          senderName: 'PRAVAAH Autopilot',
+          text: '✅ Calendar invite dispatched and confirmed for Thursday, Oct 24 @ 2:00 PM EST. Lead #412 created and qualified in CRM with a 94/100 BANT score.',
+          timestamp: '10:16 AM',
+        },
+      ],
+    },
+    {
+      id: 'conv-2',
+      name: 'Dr. Michael Chang',
+      company: 'Nexus Global Health',
+      channel: 'Web Chat',
+      channelType: 'web',
+      status: 'Meeting Booked',
+      statusVariant: 'accent',
+      intentScore: 89,
+      unreadCount: 0,
+      autopilotEnabled: true,
+      bant: {
+        budget: '$18,500 ARR',
+        authority: 'Chief of Medicine',
+        need: 'Conflict-Free Telehealth Booking',
+        timeline: 'Immediate',
+        score: 89,
+      },
+      flowRuleMatched: 'Calendar Slot Optimizer Rule',
+      nextChainedAction: 'Sync with Dr. Chang Calendar & Send Prep Brief',
+      messages: [
+        {
+          id: 'm-21',
+          sender: 'customer',
+          senderName: 'Dr. Michael Chang',
+          text: 'Could we reschedule our onboarding review to Friday morning at 10:30 AM?',
+          timestamp: 'Yesterday',
+        },
+        {
+          id: 'm-22',
+          sender: 'ai',
+          senderName: 'PRAVAAH Autopilot',
+          text: 'Checking team calendar availability... Friday @ 10:30 AM EST is completely clear! Calendar invite has been updated.',
+          timestamp: 'Yesterday',
+        },
+      ],
+    },
+    {
+      id: 'conv-3',
+      name: 'David Ross',
+      company: 'Quantum Health Care',
+      channel: 'SMS Inbound',
+      channelType: 'sms',
+      status: 'Qualified',
+      statusVariant: 'success',
+      intentScore: 98,
+      unreadCount: 0,
+      autopilotEnabled: false,
+      bant: {
+        budget: '$60,000 ARR',
+        authority: 'VP Operations',
+        need: 'Urgent Clinic Expansion (25 Provider Seats)',
+        timeline: 'This Week',
+        score: 98,
+      },
+      flowRuleMatched: 'Urgent SLA Escalation (< 15 min)',
+      nextChainedAction: 'Alert Executive On-Call & Lock Priority Slot',
+      messages: [
+        {
+          id: 'm-31',
+          sender: 'customer',
+          senderName: 'David Ross',
+          text: 'Urgent: Clinic expansion requires 25 additional provider seats by this Friday. Please connect us with an AE.',
+          timestamp: '2 hours ago',
+        },
+      ],
+    },
+  ]);
+
+  const [selectedId, setSelectedId] = useState('conv-1');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [inputMessage, setInputMessage] = useState('');
   const [mobileChatView, setMobileChatView] = useState(false);
+  const [showReasoningDrawer, setShowReasoningDrawer] = useState(true);
 
   const chatEndRef = useRef(null);
 
   const activeConversation =
-    conversations.find((c) => c.id === selectedId) || null;
+    conversations.find((c) => c.id === selectedId) || conversations[0];
 
-  // Scroll chat to bottom when messages update
   useEffect(() => {
     if (activeConversation?.messages) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,7 +166,6 @@ export default function Conversations() {
   const handleSelectConversation = (id) => {
     setSelectedId(id);
     setMobileChatView(true);
-    // Mark as read
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
     );
@@ -49,19 +173,19 @@ export default function Conversations() {
 
   const handleSendMessage = (e) => {
     e?.preventDefault();
-    if (!inputMessage.trim() || !selectedId) return;
+    if (!inputMessage.trim() || !activeConversation) return;
 
     const newMessage = {
       id: `msg-${Date.now()}`,
       sender: 'agent',
-      senderName: 'Agent',
+      senderName: 'Operations Admin',
       text: inputMessage.trim(),
       timestamp: 'Just now',
     };
 
     setConversations((prev) =>
       prev.map((c) => {
-        if (c.id === selectedId) {
+        if (c.id === activeConversation.id) {
           return {
             ...c,
             messages: [...(c.messages || []), newMessage],
@@ -75,7 +199,7 @@ export default function Conversations() {
   };
 
   const handleSendQuickReply = (text) => {
-    if (!selectedId) return;
+    if (!activeConversation) return;
 
     const newMessage = {
       id: `msg-${Date.now()}`,
@@ -87,7 +211,7 @@ export default function Conversations() {
 
     setConversations((prev) =>
       prev.map((c) => {
-        if (c.id === selectedId) {
+        if (c.id === activeConversation.id) {
           return {
             ...c,
             messages: [...(c.messages || []), newMessage],
@@ -99,17 +223,16 @@ export default function Conversations() {
   };
 
   const toggleAutopilot = () => {
-    if (!selectedId) return;
+    if (!activeConversation) return;
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === selectedId
+        c.id === activeConversation.id
           ? { ...c, autopilotEnabled: !c.autopilotEnabled }
           : c
       )
     );
   };
 
-  // Filter conversations
   const filteredConversations = conversations.filter((c) => {
     const matchesSearch =
       c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -128,182 +251,156 @@ export default function Conversations() {
   const getChannelIcon = (type) => {
     switch (type) {
       case 'whatsapp':
-        return <Smartphone className="w-3.5 h-3.5 text-black" />;
+        return <Smartphone className="w-3.5 h-3.5 text-[#0c9488]" />;
       case 'web':
-        return <Globe className="w-3.5 h-3.5 text-black" />;
+        return <Globe className="w-3.5 h-3.5 text-[#0058be]" />;
       case 'sms':
-        return <MessageSquare className="w-3.5 h-3.5 text-neutral-600" />;
+        return <MessageSquare className="w-3.5 h-3.5 text-[#76777d]" />;
       default:
-        return <Globe className="w-3.5 h-3.5 text-black" />;
+        return <Globe className="w-3.5 h-3.5 text-[#0058be]" />;
     }
   };
 
   return (
-    <div className="h-[calc(100vh-9rem)] md:h-[calc(100vh-8.5rem)] min-h-[520px] flex flex-col gap-4 animate-fadeIn bg-white text-black">
+    <div className="h-[calc(100vh-9rem)] md:h-[calc(100vh-8.5rem)] min-h-[560px] flex flex-col gap-4 animate-fadeIn font-sans bg-[#f8f9ff] text-[#0b1c30]">
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-black tracking-tight flex items-center gap-2">
-            <span>Conversations</span>
-            <Badge variant="primary" size="sm">
-              {conversations.length} Threads
+          <h1 className="font-heading text-2xl font-extrabold text-[#0b1c30] tracking-tight flex items-center gap-2.5">
+            <span>Conversations Hub</span>
+            <Badge variant="accent" size="sm">
+              {conversations.length} Active Threads
             </Badge>
           </h1>
-          <p className="text-xs text-neutral-600">
-            Live omnichannel chats managed autonomously by PRAVAAH AI.
+          <p className="text-xs text-[#45464d]">
+            Omnichannel customer inquiries autonomously moved to CRM pipeline and calendar actions.
           </p>
         </div>
 
         <div className="hidden sm:flex items-center gap-2">
-          <Badge variant="secondary" dot pulse size="sm">
-            AI Monitoring Ready
-          </Badge>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowReasoningDrawer(!showReasoningDrawer)}
+            className="text-xs font-semibold text-[#0058be] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
+            leftIcon={<Layers className="w-3.5 h-3.5" />}
+          >
+            {showReasoningDrawer ? 'Hide AI Inspector' : 'Show AI Inspector'}
+          </Button>
         </div>
       </div>
 
-      {/* Main Two-Panel Card Container */}
+      {/* Main Multi-Panel Container */}
       <Card
         variant="default"
-        className="flex-1 min-h-0 border-neutral-200 overflow-hidden flex flex-col md:flex-row shadow-sm bg-white"
+        className="flex-1 min-h-0 border-[#e5eeff] overflow-hidden flex flex-col md:flex-row shadow-[0_1px_3px_rgba(11,28,48,0.05)] bg-white"
       >
         {/* ================= LEFT PANEL: CONVERSATIONS LIST ================= */}
         <div
-          className={`w-full md:w-80 lg:w-96 border-r border-neutral-200 flex flex-col bg-white shrink-0 ${
+          className={`w-full md:w-80 lg:w-88 border-r border-[#e5eeff] flex flex-col bg-white shrink-0 ${
             mobileChatView ? 'hidden md:flex' : 'flex'
           }`}
         >
           {/* Search and Filters */}
-          <div className="p-3.5 border-b border-neutral-200 flex flex-col gap-2.5 bg-neutral-50">
+          <div className="p-3.5 border-b border-[#e5eeff] flex flex-col gap-2.5 bg-[#f8f9ff]">
             <Input
               placeholder="Search leads, companies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="sm"
-              startIcon={<Search className="w-4 h-4 text-neutral-400" />}
-              className="bg-white"
+              startIcon={<Search className="w-4 h-4 text-[#76777d]" />}
+              className="bg-white border-[#dce9ff]"
             />
 
             {/* Filter Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <button
-                onClick={() => setFilterStatus('all')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  filterStatus === 'all'
-                    ? 'bg-black text-white font-semibold'
-                    : 'bg-white text-neutral-700 hover:text-black border border-neutral-200'
-                }`}
-              >
-                All ({conversations.length})
-              </button>
-              <button
-                onClick={() => setFilterStatus('booked')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  filterStatus === 'booked'
-                    ? 'bg-black text-white font-semibold'
-                    : 'bg-white text-neutral-700 hover:text-black border border-neutral-200'
-                }`}
-              >
-                Booked
-              </button>
-              <button
-                onClick={() => setFilterStatus('qualified')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  filterStatus === 'qualified'
-                    ? 'bg-black text-white font-semibold'
-                    : 'bg-white text-neutral-700 hover:text-black border border-neutral-200'
-                }`}
-              >
-                Qualified
-              </button>
+              {['all', 'booked', 'qualified', 'unread'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setFilterStatus(st)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all cursor-pointer whitespace-nowrap ${
+                    filterStatus === st
+                      ? 'bg-[#0058be] text-white shadow-xs'
+                      : 'bg-white text-[#45464d] hover:text-[#0058be] border border-[#dce9ff]'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Scrollable Conversation List / Empty State */}
-          <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 flex flex-col">
-            {filteredConversations.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-400">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-semibold text-black">No conversations yet</span>
-                <p className="text-[11px] text-neutral-500 max-w-[200px]">
-                  Incoming chats from WhatsApp, Web, and SMS will appear here in real time.
-                </p>
-              </div>
-            ) : (
-              filteredConversations.map((conv) => {
-                const isSelected = conv.id === selectedId;
-                const lastMsg = conv.messages?.[conv.messages.length - 1];
+          {/* Scrollable Conversation List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-[#e5eeff] flex flex-col">
+            {filteredConversations.map((conv) => {
+              const isSelected = conv.id === activeConversation?.id;
+              const lastMsg = conv.messages?.[conv.messages.length - 1];
 
-                return (
+              return (
+                <div
+                  key={conv.id}
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className={`p-4 transition-all cursor-pointer flex items-start gap-3 relative ${
+                    isSelected
+                      ? 'bg-[#eff4ff] border-l-4 border-[#0058be]'
+                      : 'hover:bg-[#f8f9ff]'
+                  }`}
+                >
+                  {/* Avatar */}
                   <div
-                    key={conv.id}
-                    onClick={() => handleSelectConversation(conv.id)}
-                    className={`p-3.5 transition-all cursor-pointer flex items-start gap-3 relative group ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-xs transition-colors ${
                       isSelected
-                        ? 'bg-neutral-100 border-l-2 border-black'
-                        : 'hover:bg-neutral-50'
+                        ? 'bg-[#0058be] text-white'
+                        : 'bg-[#eff4ff] text-[#004395] border border-[#d8e2ff]'
                     }`}
                   >
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center font-bold text-xs text-black shrink-0 group-hover:border-black transition-colors">
-                      {conv.avatar || conv.name?.slice(0, 2).toUpperCase() || 'CU'}
-                    </div>
-
-                    {/* Content preview */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span
-                          className={`font-semibold text-xs truncate ${
-                            isSelected ? 'text-black font-bold' : 'text-black'
-                          }`}
-                        >
-                          {conv.name}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 shrink-0">
-                          {lastMsg?.timestamp?.replace('Today, ', '') || 'Recent'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mb-1">
-                        <span className="truncate">{conv.company || 'Direct Inquiry'}</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          {getChannelIcon(conv.channelType)}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-neutral-600 truncate leading-snug">
-                        {lastMsg?.text || 'No messages yet'}
-                      </p>
-
-                      <div className="flex items-center justify-between mt-2">
-                        {conv.status && (
-                          <Badge variant={conv.statusVariant || 'secondary'} size="sm">
-                            {conv.status}
-                          </Badge>
-                        )}
-
-                        {conv.intentScore && (
-                          <span className="text-[10px] font-mono text-neutral-700 font-semibold">
-                            {conv.intentScore}% Intent
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Unread indicator */}
-                    {conv.unreadCount > 0 && (
-                      <span className="w-2 h-2 rounded-full bg-black absolute right-3 top-3.5" />
-                    )}
+                    {conv.name.slice(0, 2).toUpperCase()}
                   </div>
-                );
-              })
-            )}
+
+                  {/* Content Preview */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <span className="font-heading font-bold text-xs text-[#0b1c30] truncate">
+                        {conv.name}
+                      </span>
+                      <span className="text-[10px] text-[#76777d] font-mono shrink-0">
+                        {lastMsg?.timestamp || 'Recent'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#76777d] mb-1">
+                      <span className="truncate">{conv.company}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        {getChannelIcon(conv.channelType)}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#45464d] truncate leading-snug">
+                      {lastMsg?.text || 'No messages yet'}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-2">
+                      <Badge variant={conv.statusVariant || 'secondary'} size="sm" className="text-[9px]">
+                        {conv.status}
+                      </Badge>
+
+                      <span className="text-[10px] font-mono text-[#0c9488] font-bold">
+                        {conv.intentScore}% BANT
+                      </span>
+                    </div>
+                  </div>
+
+                  {conv.unreadCount > 0 && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0058be] absolute right-3 top-4 shadow-sm" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ================= RIGHT PANEL: CHAT THREAD & INPUT ================= */}
+        {/* ================= MIDDLE PANEL: CHAT THREAD & INPUT ================= */}
         <div
           className={`flex-1 flex flex-col bg-white min-w-0 ${
             !mobileChatView ? 'hidden md:flex' : 'flex'
@@ -312,150 +409,104 @@ export default function Conversations() {
           {activeConversation ? (
             <>
               {/* Chat Header */}
-              <div className="h-16 px-4 sm:px-6 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between shrink-0">
+              <div className="h-16 px-4 sm:px-6 border-b border-[#e5eeff] bg-[#f8f9ff] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* Back button for mobile */}
                   <button
                     onClick={() => setMobileChatView(false)}
-                    className="md:hidden p-1.5 rounded-lg bg-white border border-neutral-200 text-neutral-700 hover:text-black cursor-pointer"
-                    aria-label="Back to conversations list"
+                    className="md:hidden p-1.5 rounded-lg bg-white border border-[#dce9ff] text-[#45464d] hover:text-[#0b1c30]"
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
 
-                  <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                    {activeConversation.avatar || activeConversation.name?.slice(0, 2).toUpperCase() || 'CU'}
+                  <div className="w-9 h-9 rounded-xl bg-[#0b1c30] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                    {activeConversation.name.slice(0, 2).toUpperCase()}
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="font-heading font-semibold text-sm text-black truncate">
+                      <h2 className="font-heading font-bold text-sm text-[#0b1c30] truncate">
                         {activeConversation.name}
                       </h2>
-                      {activeConversation.status && (
-                        <Badge variant={activeConversation.statusVariant || 'secondary'} size="sm">
-                          {activeConversation.status}
-                        </Badge>
-                      )}
+                      <Badge variant={activeConversation.statusVariant || 'secondary'} size="sm">
+                        {activeConversation.status}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-neutral-500 truncate">
-                      {activeConversation.company && (
-                        <>
-                          <span className="flex items-center gap-1">
-                            <Building2 className="w-3.5 h-3.5 text-neutral-400" />
-                            {activeConversation.company}
-                          </span>
-                          <span>•</span>
-                        </>
-                      )}
+                    <div className="flex items-center gap-2 text-[11px] text-[#76777d] truncate">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-[#0058be]" />
+                        {activeConversation.company}
+                      </span>
+                      <span>•</span>
                       <span className="flex items-center gap-1">
                         {getChannelIcon(activeConversation.channelType)}
-                        {activeConversation.channel || 'Chat'}
+                        {activeConversation.channel}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Right Action: Autopilot Mode Toggle */}
+                {/* Right Toggle: Autopilot */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={toggleAutopilot}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                       activeConversation.autopilotEnabled
-                        ? 'bg-black border-black text-white'
-                        : 'bg-white border-neutral-300 text-neutral-700 hover:text-black'
+                        ? 'bg-[#e6fcf8] border-[#89f5e7] text-[#005049]'
+                        : 'bg-white border-[#dce9ff] text-[#45464d] hover:text-[#0b1c30]'
                     }`}
-                    title="Toggle AI Autopilot"
                   >
                     <Zap
                       className={`w-3.5 h-3.5 ${
                         activeConversation.autopilotEnabled
-                          ? 'text-white animate-pulse'
-                          : 'text-neutral-400'
+                          ? 'text-[#0c9488] animate-pulse'
+                          : 'text-[#76777d]'
                       }`}
                     />
-                    <span className="hidden sm:inline">
+                    <span>
                       {activeConversation.autopilotEnabled
-                        ? 'AI Autopilot: ON'
-                        : 'Manual Mode'}
+                        ? 'Autopilot: Active'
+                        : 'Manual Agent'}
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* Chat Messages Body */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-white">
-                <div className="text-center my-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-[11px] text-neutral-700 font-medium">
-                    <ShieldCheck className="w-3.5 h-3.5 text-black" />
-                    Verified Inbound Lead via {activeConversation.channel || 'Direct'}
-                  </span>
-                </div>
-
-                {(activeConversation.messages || []).map((msg) => {
+              {/* Message History Feed */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-[#f8f9ff]/40">
+                {activeConversation.messages?.map((msg) => {
+                  const isAi = msg.sender === 'ai';
+                  const isAgent = msg.sender === 'agent';
                   const isCustomer = msg.sender === 'customer';
-                  const isAI = msg.sender === 'ai';
 
                   return (
                     <div
                       key={msg.id}
                       className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${
-                        isCustomer ? 'self-start' : 'self-end items-end'
+                        isCustomer ? 'self-start items-start' : 'self-end items-end'
                       }`}
                     >
-                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-neutral-500">
-                        {isAI ? (
-                          <span className="flex items-center gap-1 text-black font-semibold">
-                            <Bot className="w-3 h-3 text-black" />
-                            {msg.senderName || 'PRAVAAH AI'}
-                          </span>
-                        ) : isCustomer ? (
-                          <span className="font-semibold text-black">
-                            {msg.senderName || activeConversation.name}
-                          </span>
-                        ) : (
-                          <span className="text-black font-medium">
-                            {msg.senderName || 'Agent'}
-                          </span>
-                        )}
+                      {/* Sender Label */}
+                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-[#76777d]">
+                        {isAi && <Sparkles className="w-3 h-3 text-[#0058be]" />}
+                        <span className="font-semibold text-[#0b1c30]">
+                          {msg.senderName}
+                        </span>
                         <span>•</span>
-                        <span>{msg.timestamp || 'Now'}</span>
+                        <span className="font-mono text-[10px]">{msg.timestamp}</span>
                       </div>
 
+                      {/* Bubble */}
                       <div
-                        className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                          isCustomer
-                            ? 'bg-neutral-100 text-black border border-neutral-200 rounded-tl-sm shadow-xs'
-                            : isAI
-                            ? 'bg-neutral-900 text-white border border-black shadow-sm rounded-tr-sm'
-                            : 'bg-black text-white font-semibold rounded-tr-sm shadow-md'
+                        className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                          isAi
+                            ? 'bg-[#0b1c30] text-white border border-[#131b2e] shadow-sm'
+                            : isAgent
+                            ? 'bg-[#0058be] text-white shadow-xs'
+                            : 'bg-white text-[#0b1c30] border border-[#e5eeff] shadow-xs'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
-
-                        {msg.isBookingConfirmed && (
-                          <div className="mt-3 p-2.5 rounded-xl bg-white text-black border border-neutral-300 flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-neutral-100 text-black shrink-0 border border-neutral-200">
-                              <Calendar className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-black block text-[11px]">
-                                Demo Appointment Booked
-                              </span>
-                              <span className="text-[10px] text-neutral-600">
-                                Calendar invite & confirmation sent
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                        {msg.text}
                       </div>
-
-                      {!isCustomer && (
-                        <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-neutral-500">
-                          <CheckCheck className="w-3 h-3 text-black" />
-                          <span>Delivered</span>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -463,82 +514,143 @@ export default function Conversations() {
               </div>
 
               {/* AI Quick Suggestion Chips */}
-              <div className="px-4 py-2 bg-neutral-50 border-t border-neutral-200 flex items-center gap-2 overflow-x-auto">
-                <span className="text-[10px] font-semibold uppercase text-black shrink-0 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-black" /> Quick AI Reply:
+              <div className="px-4 py-2 bg-white border-t border-[#e5eeff] flex items-center gap-2 overflow-x-auto text-xs">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#76777d] flex items-center gap-1 shrink-0">
+                  <Sparkles className="w-3 h-3 text-[#0058be]" />
+                  AI Suggested:
                 </span>
                 <button
                   onClick={() =>
                     handleSendQuickReply(
-                      'Here is the link to our self-serve calendar: https://pravaah.ai/book/demo'
+                      'I have reserved Thursday @ 2 PM EST for your team. Here is your calendar link: https://meet.pravaah.ai/demo-412'
                     )
                   }
-                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-neutral-100 border border-neutral-300 text-[11px] text-neutral-800 hover:text-black transition-colors whitespace-nowrap cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-[#eff4ff] text-[#004395] hover:bg-[#d8e2ff] font-semibold transition-colors shrink-0 text-xs border border-[#d8e2ff]"
                 >
-                  📅 Propose Calendar Link
+                  📅 Send Demo Link
                 </button>
                 <button
                   onClick={() =>
                     handleSendQuickReply(
-                      'I have attached our complete pricing tier breakdown for review.'
+                      'I have generated your customized 50-seat Enterprise SLA proposal. Check your inbox for SOW-412.'
                     )
                   }
-                  className="px-2.5 py-1 rounded-lg bg-white hover:bg-neutral-100 border border-neutral-300 text-[11px] text-neutral-800 hover:text-black transition-colors whitespace-nowrap cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-[#eff4ff] text-[#004395] hover:bg-[#d8e2ff] font-semibold transition-colors shrink-0 text-xs border border-[#d8e2ff]"
                 >
-                  📄 Send Pricing Sheet
+                  📄 Dispatch SOW Agreement
                 </button>
               </div>
 
-              {/* Message Input Box Footer */}
+              {/* Message Input Box */}
               <form
                 onSubmit={handleSendMessage}
-                className="p-3 sm:p-4 bg-neutral-50 border-t border-neutral-200 flex items-center gap-2 shrink-0"
+                className="p-3 bg-white border-t border-[#e5eeff] flex items-center gap-2"
               >
                 <button
                   type="button"
-                  className="p-2 rounded-xl text-neutral-500 hover:text-black hover:bg-white transition-colors cursor-pointer border border-transparent hover:border-neutral-200"
-                  title="Attach File"
-                  aria-label="Attach File"
+                  className="p-2 rounded-xl text-[#76777d] hover:text-[#0058be] hover:bg-[#eff4ff] transition-colors"
+                  title="Attach file"
                 >
                   <Paperclip className="w-4 h-4" />
                 </button>
 
                 <input
                   type="text"
-                  placeholder={`Reply to ${activeConversation.name} as Agent...`}
+                  placeholder="Type a message or trigger a flow action..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  className="flex-1 bg-white text-black placeholder:text-neutral-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-black focus:outline-none transition-colors"
+                  className="flex-1 bg-[#f8f9ff] border border-[#dce9ff] rounded-xl px-3.5 py-2 text-xs text-[#0b1c30] placeholder-[#76777d] focus:outline-none focus:border-[#0058be] focus:ring-1 focus:ring-[#0058be]"
                 />
 
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="accent"
                   size="sm"
                   disabled={!inputMessage.trim()}
-                  className="px-4 py-2 shrink-0"
+                  rightIcon={<Send className="w-3.5 h-3.5" />}
+                  className="font-bold"
                 >
-                  <Send className="w-4 h-4" />
+                  Send
                 </Button>
               </form>
             </>
-          ) : (
-            /* Empty Right Panel: Nothing selected */
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-3 bg-neutral-50/50">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-neutral-200 shadow-sm flex items-center justify-center text-black">
-                <MessageSquare className="w-6 h-6" />
+          ) : null}
+        </div>
+
+        {/* ================= RIGHT PANEL: 5-STAGE AI REASONING INSPECTOR ================= */}
+        {showReasoningDrawer && activeConversation && (
+          <div className="hidden lg:flex w-80 border-l border-[#e5eeff] flex-col bg-[#f8f9ff] p-4 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#e5eeff]">
+              <Layers className="w-4 h-4 text-[#0058be]" />
+              <h3 className="font-heading font-bold text-xs text-[#0b1c30] uppercase tracking-wider">
+                5-Stage Reasoning Trace
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-3 text-xs">
+              {/* Stage 1 */}
+              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
+                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
+                  01. INGESTION
+                </span>
+                <span className="font-semibold text-[#0b1c30] block">
+                  {activeConversation.channel} Webhook
+                </span>
+                <span className="text-[11px] text-[#76777d] mt-0.5 block">
+                  Latency: 142ms • Verified Source
+                </span>
               </div>
-              <div className="flex flex-col gap-1">
-                <h3 className="font-heading font-semibold text-sm text-black">
-                  No conversation selected
-                </h3>
-                <p className="text-xs text-neutral-500 max-w-xs leading-relaxed">
-                  Select a conversation from the left panel or wait for incoming messages to view the live chat thread.
-                </p>
+
+              {/* Stage 2 */}
+              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
+                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
+                  02. CONTEXT & BANT
+                </span>
+                <div className="flex flex-col gap-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-[#76777d]">Budget:</span>
+                    <strong className="text-[#0b1c30]">{activeConversation.bant?.budget}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#76777d]">Score:</span>
+                    <strong className="text-[#0c9488] font-bold">{activeConversation.bant?.score} / 100</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stage 3 */}
+              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
+                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
+                  03. FLOW POLICY
+                </span>
+                <span className="font-semibold text-[#004395] block">
+                  {activeConversation.flowRuleMatched}
+                </span>
+              </div>
+
+              {/* Stage 4 */}
+              <div className="p-3 rounded-xl bg-[#eff4ff] border border-[#0058be] shadow-xs">
+                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
+                  04. MUTATION EXECUTED
+                </span>
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#0058be]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0c9488]" />
+                  <span>Lead Created & Booked</span>
+                </div>
+              </div>
+
+              {/* Stage 5 */}
+              <div className="p-3 rounded-xl bg-[#0b1c30] text-white border border-[#131b2e] shadow-xs">
+                <span className="font-mono text-[10px] font-bold text-[#89f5e7] block mb-1">
+                  05. NEXT CONTINUED FLOW
+                </span>
+                <span className="text-[11px] text-[#adc6ff] block leading-snug">
+                  {activeConversation.nextChainedAction}
+                </span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -10,7 +10,7 @@
 
 **Pravaah** (representing *flow, movement, and continuous progression*) is an AI-powered B2B SaaS Business Operations Platform. It converts raw customer interactions across WhatsApp, Web Chat, SMS, and Email into completed business actions, qualified CRM opportunities, booked calendar meetings, and continuous workflows without requiring manual human data entry.
 
-### The 5-Stage Continuous Flow Engine Architecture
+### The 5-Stage Continuous Flow Engine Architecturez
 ```text
 [1. INPUT] Customer Interaction (WhatsApp / Web Chat / SMS / Email / SOW / Invoice)
        ↓
