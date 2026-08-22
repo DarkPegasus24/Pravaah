@@ -69,7 +69,7 @@ export default function Dashboard() {
           // 4. 5 most recent conversations
           supabase
             .from('conversations')
-            .select('id, customer_name, customer_contact, status, updated_at')
+            .select('id, customer_name, customer_contact, status, updated_at, channel, call_duration')
             .order('updated_at', { ascending: false })
             .limit(5),
           // 5. Created timestamps for the last 7 days to build real activity bar
@@ -491,27 +491,31 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Action 2: Inbound Voice Calls (Coming Soon) */}
-          <div className="p-5 rounded-2xl bg-white/70 border border-[#e5eeff] opacity-85 flex flex-col justify-between gap-4">
+          {/* Action 2: Inbound Voice Telephony (Active) */}
+          <div
+            onClick={() => navigate('/dashboard/calling')}
+            className="p-5 rounded-2xl bg-white border border-[#dce9ff] hover:border-[#0058be] hover:shadow-md transition-all flex flex-col justify-between gap-4 cursor-pointer group"
+          >
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#f8f9ff] text-[#76777d] flex items-center justify-center border border-[#e5eeff]">
+                <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
                   <PhoneCall className="w-5 h-5" />
                 </div>
-                <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#0058be] border-[#d8e2ff] text-[10px]">
-                  Coming Soon
+                <Badge variant="success" size="sm" className="text-[10px]">
+                  OmniDimension Live
                 </Badge>
               </div>
-              <h3 className="font-heading font-bold text-sm text-[#45464d]">
-                Inbound Voice Calls
+              <h3 className="font-heading font-bold text-sm text-[#0b1c30] group-hover:text-[#0058be] transition-colors">
+                AI Voice Telephony
               </h3>
-              <p className="text-xs text-[#76777d] mt-1 leading-relaxed">
-                Autonomous telephony agent that picks up phone calls, provides voice responses, and creates call briefs.
+              <p className="text-xs text-[#45464d] mt-1 leading-relaxed">
+                Autonomous telephony agent that picks up incoming phone calls, provides voice responses, and logs audio recordings.
               </p>
             </div>
 
-            <div className="pt-3 border-t border-[#e5eeff] text-[11px] font-semibold text-[#76777d]">
-              Phase 2 Roadmap • In Active Development
+            <div className="pt-3 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
+              <span>Configure Voice Agent</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
@@ -651,19 +655,25 @@ export default function Dashboard() {
                       className="p-4 sm:px-6 hover:bg-[#f8f9ff] transition-colors flex items-center justify-between cursor-pointer group"
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-[#0058be] text-white flex items-center justify-center shrink-0 shadow-xs">
-                          <User className="w-4.5 h-4.5 text-white" />
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                          conv.channel === 'voice' ? 'bg-[#0b1c30] text-[#89f5e7]' : 'bg-[#0058be] text-white'
+                        }`}>
+                          {conv.channel === 'voice' ? <PhoneCall className="w-4.5 h-4.5" /> : <User className="w-4.5 h-4.5 text-white" />}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-heading font-bold text-xs sm:text-sm text-[#0b1c30] truncate group-hover:text-[#0058be] transition-colors">
-                              {conv.customer_name || 'Customer Inquiry'}
+                              {conv.customer_name || (conv.channel === 'voice' ? 'Voice Call Caller' : 'Customer Inquiry')}
                             </span>
-                            {conv.status && (
+                            {conv.channel === 'voice' ? (
+                              <Badge variant="success" size="sm" className="text-[10px]">
+                                Phone Call
+                              </Badge>
+                            ) : conv.status ? (
                               <Badge variant="secondary" size="sm" className="text-[10px] bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
                                 {conv.status}
                               </Badge>
-                            )}
+                            ) : null}
                           </div>
                           {conv.customer_contact ? (
                             <p className="text-[11px] text-[#76777d] truncate">
@@ -671,7 +681,7 @@ export default function Dashboard() {
                             </p>
                           ) : (
                             <p className="text-[11px] text-[#76777d] truncate">
-                              Direct Web Inbound
+                              {conv.channel === 'voice' ? 'OmniDimension Inbound' : 'Direct Web Inbound'}
                             </p>
                           )}
                         </div>

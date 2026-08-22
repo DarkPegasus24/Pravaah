@@ -5,25 +5,23 @@ import {
   ArrowLeft,
   Search,
   Bot,
-  Zap,
   Database,
   Layers,
   PhoneCall,
   ShieldCheck,
-  Code2,
   Terminal,
   Server,
   Cpu,
   Copy,
   Check,
   ChevronRight,
-  ExternalLink,
   MessageSquare,
+  Smartphone,
+  Share2,
   LayoutDashboard,
   CheckCircle2,
-  Lock,
 } from 'lucide-react';
-import { Button, Badge, Card } from '../components/ui';
+import { Button, Badge } from '../components/ui';
 import { PravaahLogo } from '../components/common/PravaahLogo';
 
 export default function Docs() {
@@ -42,7 +40,9 @@ export default function Docs() {
     { id: 'architecture', title: 'Architecture & Tech Stack', icon: Layers },
     { id: 'ai-agent', title: 'AI Agent & Real-Time Engine', icon: Bot },
     { id: 'conversations-hub', title: 'Conversations & Dashboard', icon: MessageSquare },
-    { id: 'voice-agent', title: 'Voice Calling (Roadmap)', icon: PhoneCall },
+    { id: 'voice-agent', title: 'Voice Telephony & Calling', icon: PhoneCall },
+    { id: 'whatsapp-service', title: 'WhatsApp Business API', icon: Share2 },
+    { id: 'sms-service', title: 'SMS Service & Messaging', icon: Smartphone },
     { id: 'schema', title: 'Database Schema & RLS', icon: Database },
     { id: 'edge-functions', title: 'Edge Functions & API', icon: Server },
     { id: 'setup', title: 'Setup & Environment', icon: Terminal },
@@ -281,29 +281,137 @@ export default function Docs() {
             </div>
           </section>
 
-          {/* Section 5: Voice Calling Roadmap */}
+          {/* Section 5: Voice Calling & Telephony Integration */}
           <section id="voice-agent" className="scroll-mt-24 bg-white p-6 sm:p-8 rounded-3xl border border-[#dce9ff] shadow-xs">
             <div className="flex items-center gap-2 mb-3">
-              <Badge variant="secondary" size="sm" className="border-[#d8e2ff]">
-                Roadmap
+              <Badge variant="success" size="sm" className="border-[#89f5e7]">
+                Live Telephony Ready
               </Badge>
               <Badge variant="accent" size="sm">
-                Coming Soon
+                OmniDimension / OmniDev
               </Badge>
             </div>
             <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#0b1c30] flex items-center gap-2">
-              <PhoneCall className="w-5 h-5 text-[#0058be]" /> AI Voice Calling Support
+              <PhoneCall className="w-5 h-5 text-[#0058be]" /> AI Voice Telephony & Calling Architecture
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#45464d] leading-relaxed">
-              We are actively developing native telephony and voice pipeline integration. This will enable Pravaah to answer direct customer phone calls, engage in ultra-low latency voice dialogue, summarize the call, and log transcripts directly into your dashboard.
+              Pravaah integrates with <strong>OmniDimension</strong> (and standard WebRTC/SIP telephony providers) to enable real 24/7 inbound phone reception. When a customer dials your business phone number from their phone, the AI answers autonomously, references your Supabase Knowledge Base, and streams audio recordings and transcripts into your dashboard.
             </p>
 
-            <div className="mt-4 p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] text-xs text-[#004395] leading-relaxed">
-              <strong>Phase 2 Target:</strong> WebRTC & SIP inbound gateway with speech-to-text (STT), LLM reasoning, and natural text-to-speech (TTS) synthesis.
+            <div className="mt-5 p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col gap-3 text-xs">
+              <h4 className="font-heading font-bold text-xs text-[#0b1c30] flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> 3-Step Setup with OmniDimension:
+              </h4>
+              <ol className="list-decimal list-inside space-y-1.5 text-[#45464d]">
+                <li><strong>Create Agent</strong> on <a href="https://omnidim.io" target="_blank" rel="noopener noreferrer" className="text-[#0058be] underline font-semibold">omnidim.io</a> and purchase/link an inbound phone number.</li>
+                <li><strong>Configure Webhook</strong> in OmniDimension agent settings and set URL to: <code className="bg-[#eff4ff] text-[#004395] px-1.5 py-0.5 rounded font-mono text-[11px]">https://khncmjutalqwepxrydvt.supabase.co/functions/v1/voice-call-webhook</code></li>
+                <li><strong>Sync Knowledge Base</strong> in Pravaah Command Center (<code className="font-mono text-[11px]">/dashboard/calling</code>) to automatically train your agent.</li>
+              </ol>
+            </div>
+
+            <div className="mt-4 p-4 rounded-2xl bg-[#0b1c30] text-white font-mono text-xs overflow-hidden">
+              <div className="text-[#89f5e7] font-bold mb-2">Sample Webhook Event Payload:</div>
+              <pre className="text-[#adc6ff] overflow-x-auto text-[11px]">
+{`{
+  "event": "call.completed",
+  "call": {
+    "customer_phone_number": "+18302692120",
+    "customer_name": "Dr. Jenkins (Apex Clinic)",
+    "duration_seconds": 134,
+    "recording_url": "https://cdn.omnidim.io/recordings/call_992.mp3",
+    "transcript": [
+      { "role": "customer", "content": "Hi, do you have slots for root canal this Thursday?" },
+      { "role": "assistant", "content": "Yes! Dr. Miller is available at 2:00 PM on Thursday." }
+    ]
+  }
+}`}
+              </pre>
             </div>
           </section>
 
-          {/* Section 6: Database Schema & RLS */}
+          {/* Section 6: SMS Service & Two-Way Messaging */}
+          <section id="sms-service" className="scroll-mt-24 bg-white p-6 sm:p-8 rounded-3xl border border-[#dce9ff] shadow-xs">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge variant="success" size="sm" className="border-[#89f5e7]">
+                2-Way SMS Active
+              </Badge>
+              <Badge variant="accent" size="sm">
+                Carrier Webhook
+              </Badge>
+            </div>
+            <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#0b1c30] flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-[#0058be]" /> Autonomous SMS Service & Messaging
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#45464d] leading-relaxed">
+              Pravaah supports automated two-way SMS conversations and post-call follow-ups. When customers text your business number, Pravaah generates concise responses under 2 seconds, while automatically dispatching booking confirmations and missed-call recovery texts.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+              <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff]">
+                <h4 className="font-heading font-bold text-xs text-[#0b1c30] mb-1">1. Two-Way AI Text Replies</h4>
+                <p className="text-xs text-[#45464d] leading-relaxed">
+                  Instant natural replies under 160 characters referencing your Knowledge Base.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff]">
+                <h4 className="font-heading font-bold text-xs text-[#0b1c30] mb-1">2. Post-Call Follow-ups</h4>
+                <p className="text-xs text-[#45464d] leading-relaxed">
+                  Automated SMS dispatching meeting links immediately when a phone call concludes.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff]">
+                <h4 className="font-heading font-bold text-xs text-[#0b1c30] mb-1">3. Missed-Call Recovery</h4>
+                <p className="text-xs text-[#45464d] leading-relaxed">
+                  Instant text back to recover and qualify missed callers automatically.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 rounded-2xl bg-[#0b1c30] text-white font-mono text-xs overflow-hidden">
+              <div className="text-[#89f5e7] font-bold mb-2">Inbound SMS Webhook URL:</div>
+              <div className="p-2 rounded bg-[#131b2e] text-[#adc6ff] break-all select-all text-[11px]">
+                https://khncmjutalqwepxrydvt.supabase.co/functions/v1/sms-inbound-webhook
+              </div>
+            </div>
+          </section>
+
+          {/* Section 7: WhatsApp Business Cloud API & Webhooks */}
+          <section id="whatsapp-service" className="scroll-mt-24 bg-white p-6 sm:p-8 rounded-3xl border border-[#bbf7d0] shadow-xs">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge variant="success" size="sm" className="bg-[#25D366]/20 text-[#166534] border-[#25D366]/40">
+                WhatsApp Cloud API
+              </Badge>
+              <Badge variant="accent" size="sm">
+                Meta Verified
+              </Badge>
+            </div>
+            <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#0b1c30] flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-[#25D366]" /> Meta WhatsApp Business AI Integration
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#45464d] leading-relaxed">
+              Pravaah links directly with the official <strong>Meta WhatsApp Cloud API</strong>. When customers send WhatsApp messages, Pravaah handles Meta's verification handshake, processes messages with AI in under 2 seconds, and sends formatted WhatsApp replies directly back to the customer.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+              <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0]">
+                <h4 className="font-heading font-bold text-xs text-[#14532d] mb-1">1. Callback Webhook URL</h4>
+                <p className="font-mono text-[11px] text-[#166534] bg-white p-2 rounded border border-[#bbf7d0] break-all select-all">
+                  https://khncmjutalqwepxrydvt.supabase.co/functions/v1/whatsapp-webhook
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0]">
+                <h4 className="font-heading font-bold text-xs text-[#14532d] mb-1">2. Verify Token (Meta Handshake)</h4>
+                <p className="font-mono text-[11px] text-[#166534] bg-white p-2 rounded border border-[#bbf7d0] select-all">
+                  pravaah_verify_token_2026
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 8: Database Schema & RLS */}
           <section id="schema" className="scroll-mt-24 bg-white p-6 sm:p-8 rounded-3xl border border-[#dce9ff] shadow-xs">
             <Badge variant="secondary" size="sm" className="mb-3 border-[#d8e2ff]">
               Database

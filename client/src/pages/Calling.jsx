@@ -6,14 +6,23 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Info,
-  Layers,
   Mic,
   Volume2,
   PhoneOff,
   User,
   Sparkles,
   MessageSquare,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  Zap,
+  Bot,
+  Radio,
+  Sliders,
+  Smartphone,
+  MessageCircle,
+  Share2,
 } from 'lucide-react';
 import {
   Card,
@@ -27,41 +36,95 @@ import {
 } from '../components/ui';
 import { supabase } from '../lib/supabaseClient';
 
+const VOICE_PERSONAS = [
+  {
+    id: 'receptionist',
+    name: 'Front-Desk Receptionist',
+    desc: 'Warm, professional, answers FAQs, and books appointments.',
+    icon: User,
+  },
+  {
+    id: 'sales_rep',
+    name: 'SaaS Solutions Consultant',
+    desc: 'Qualifies BANT budget, handles pricing, and books demo slots.',
+    icon: Sparkles,
+  },
+  {
+    id: 'healthcare',
+    name: 'Clinic Care Coordinator',
+    desc: 'Patient intake, physician availability, and clinic procedures.',
+    icon: ShieldCheck,
+  },
+  {
+    id: 'support_sla',
+    name: 'Emergency SLA Dispatcher',
+    desc: 'High-urgency triage, incident logging, and on-call escalation.',
+    icon: Zap,
+  },
+];
+
+const ACCENT_OPTIONS = [
+  { id: 'en-IN', label: 'English (India / Hinglish)', flag: '🇮🇳' },
+  { id: 'en-US', label: 'English (United States)', flag: '🇺🇸' },
+  { id: 'en-GB', label: 'English (United Kingdom)', flag: '🇬🇧' },
+  { id: 'hi-IN', label: 'Hindi (National)', flag: '🇮🇳' },
+];
+
 export default function Calling() {
   // Settings Form State
   const [businessPhone, setBusinessPhone] = useState('8302692120');
   const [knowledgeBase, setKnowledgeBase] = useState('');
+  const [omnidimApiKey, setOmnidimApiKey] = useState('');
+  const [omnidimAgentId, setOmnidimAgentId] = useState('');
+  const [selectedPersona, setSelectedPersona] = useState('receptionist');
+  const [selectedAccent, setSelectedAccent] = useState('en-IN');
   const [existingSettingId, setExistingSettingId] = useState(null);
+
+  // SMS Automation Settings State
+  const [smsAutoReplyEnabled, setSmsAutoReplyEnabled] = useState(true);
+  const [smsMissedCallEnabled, setSmsMissedCallEnabled] = useState(true);
+  const [smsPostCallEnabled, setSmsPostCallEnabled] = useState(true);
+  const [smsMissedCallText, setSmsMissedCallText] = useState(
+    'Hi! Sorry we missed your call to Pravaah. How can we assist you today? Feel free to reply directly to this text.'
+  );
+  const [smsPostCallText, setSmsPostCallText] = useState(
+    'Hi {customer_name}, thanks for speaking with Pravaah! Here is your meeting details link: https://pravaah.ai/book. Let us know if you need anything else.'
+  );
+
+  // WhatsApp Automation Settings State
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [whatsappPhoneNumberId, setWhatsappPhoneNumberId] = useState('');
+  const [whatsappAccessToken, setWhatsappAccessToken] = useState('');
+  const [whatsappVerifyToken] = useState('pravaah_verify_token_2026');
+  const [whatsappAutoReplyEnabled, setWhatsappAutoReplyEnabled] = useState(true);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
+  const [copiedSmsWebhook, setCopiedSmsWebhook] = useState(false);
+  const [copiedWaWebhook, setCopiedWaWebhook] = useState(false);
+  const [copiedWaToken, setCopiedWaToken] = useState(false);
 
   // Web Voice Demo State
   const [callState, setCallState] = useState('idle'); // 'idle' | 'listening' | 'thinking' | 'speaking'
   const [transcript, setTranscript] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
-  const [speechSupported, setSpeechSupported] = useState(true);
 
   const activeCallRef = useRef(false);
   const recognitionRef = useRef(null);
   const activeConvIdRef = useRef(null);
   const transcriptEndRef = useRef(null);
 
+  const voiceWebhookEndpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://khncmjutalqwepxrydvt.supabase.co'}/functions/v1/voice-call-webhook`;
+  const smsWebhookEndpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://khncmjutalqwepxrydvt.supabase.co'}/functions/v1/sms-inbound-webhook`;
+  const whatsappWebhookEndpoint = `${import.meta.env.VITE_SUPABASE_URL || 'https://khncmjutalqwepxrydvt.supabase.co'}/functions/v1/whatsapp-webhook`;
+
   // Sync ref with state
   useEffect(() => {
     activeConvIdRef.current = activeConvId;
   }, [activeConvId]);
-
-  // Check Web Speech API Support on mount
-  useEffect(() => {
-    const isSupported =
-      typeof window !== 'undefined' &&
-      !!(window.SpeechRecognition || window.webkitSpeechRecognition) &&
-      !!window.speechSynthesis;
-    setSpeechSupported(isSupported);
-  }, []);
 
   // 1. Fetch existing settings from Supabase on mount
   useEffect(() => {
@@ -86,10 +149,25 @@ export default function Calling() {
             setExistingSettingId(setting.id);
             setBusinessPhone(setting.business_phone || '8302692120');
             setKnowledgeBase(setting.knowledge_base || '');
+            setOmnidimApiKey(setting.omnidim_api_key || '');
+            setOmnidimAgentId(setting.omnidim_agent_id || '');
+            setSelectedPersona(setting.voice_persona || 'receptionist');
+            setSelectedAccent(setting.voice_accent || 'en-IN');
+            setSmsAutoReplyEnabled(setting.sms_auto_reply_enabled !== false);
+            setSmsMissedCallEnabled(setting.sms_missed_call_reply_enabled !== false);
+            setSmsPostCallEnabled(setting.sms_post_call_followup_enabled !== false);
+            if (setting.sms_missed_call_text) setSmsMissedCallText(setting.sms_missed_call_text);
+            if (setting.sms_post_call_text) setSmsPostCallText(setting.sms_post_call_text);
+
+            setWhatsappEnabled(setting.whatsapp_enabled !== false);
+            setWhatsappPhoneNumberId(setting.whatsapp_phone_number_id || '');
+            setWhatsappAccessToken(setting.whatsapp_access_token || '');
+            setWhatsappAutoReplyEnabled(setting.whatsapp_auto_reply_enabled !== false);
           } else {
-            // Default phone number and empty knowledge base
             setBusinessPhone('8302692120');
             setKnowledgeBase('');
+            setSelectedPersona('receptionist');
+            setSelectedAccent('en-IN');
           }
         }
       } catch (err) {
@@ -135,10 +213,48 @@ export default function Calling() {
     }
   }, [transcript]);
 
+  // Copy webhook URL helper
+  const handleCopyWebhook = () => {
+    navigator.clipboard.writeText(voiceWebhookEndpoint);
+    setCopiedWebhook(true);
+    setTimeout(() => setCopiedWebhook(false), 2500);
+  };
+
+  const handleCopySmsWebhook = () => {
+    navigator.clipboard.writeText(smsWebhookEndpoint);
+    setCopiedSmsWebhook(true);
+    setTimeout(() => setCopiedSmsWebhook(false), 2500);
+  };
+
+  const handleCopyWaWebhook = () => {
+    navigator.clipboard.writeText(whatsappWebhookEndpoint);
+    setCopiedWaWebhook(true);
+    setTimeout(() => setCopiedWaWebhook(false), 2500);
+  };
+
+  const handleCopyWaToken = () => {
+    navigator.clipboard.writeText(whatsappVerifyToken);
+    setCopiedWaToken(true);
+    setTimeout(() => setCopiedWaToken(false), 2500);
+  };
+
+  // Quick Template Helper
+  const handleInsertTemplate = (type) => {
+    if (type === 'clinic') {
+      setKnowledgeBase(
+        `Business Name: Apex Dental & Wellness Care\nWorking Hours: Monday to Saturday, 9:00 AM - 7:00 PM EST\nAddress: 450 Medical Plaza, Suite 200\nServices & Pricing:\n- General Dental Consultation: $75\n- Teeth Whitening & Cleaning: $180\n- Root Canal & Crown Therapy: $650 - $950\n- Emergency Dental Care: 24/7 On-Call Support\nBooking Policy: Appointments require 24h advance notice for cancellations. We accept major dental insurance (Delta, Cigna, Aetna, MetLife).\nEmergency Line: For acute pain or fractures, route immediately to on-call duty nurse.`
+      );
+    } else if (type === 'saas') {
+      setKnowledgeBase(
+        `Company: Pravaah Cloud Technologies\nProduct: AI Autonomous Business Operations Platform\nPricing Plans:\n- Starter: $199/month (Includes 500 autonomous voice minutes + CRM sync)\n- Growth: $499/month (2,500 voice minutes, custom voice cloning, SLA escalations)\n- Enterprise: Custom ($1,500+/mo, dedicated SIP trunking, 99.99% uptime)\nTarget Customers: B2B SaaS, Dental/Medical Clinics, Legal Firms, Real Estate Agencies.\nDemo Booking: Book 30-min architecture walkthrough with Senior Solutions Architect Monday through Friday 10 AM to 5 PM EST.`
+      );
+    }
+  };
+
   // 2. Save or update settings in Supabase
   const handleSaveSettings = async (e) => {
     e?.preventDefault();
-    if (!knowledgeBase.trim() || isSaving) return;
+    if (isSaving) return;
 
     try {
       setIsSaving(true);
@@ -148,11 +264,25 @@ export default function Calling() {
       const payload = {
         business_phone: businessPhone.trim() || '8302692120',
         knowledge_base: knowledgeBase.trim(),
+        omnidim_api_key: omnidimApiKey.trim(),
+        omnidim_agent_id: omnidimAgentId.trim(),
+        voice_persona: selectedPersona,
+        voice_accent: selectedAccent,
+        voice_provider: 'omnidim',
+        sms_auto_reply_enabled: smsAutoReplyEnabled,
+        sms_missed_call_reply_enabled: smsMissedCallEnabled,
+        sms_post_call_followup_enabled: smsPostCallEnabled,
+        sms_missed_call_text: smsMissedCallText.trim(),
+        sms_post_call_text: smsPostCallText.trim(),
+        whatsapp_enabled: whatsappEnabled,
+        whatsapp_phone_number_id: whatsappPhoneNumberId.trim(),
+        whatsapp_access_token: whatsappAccessToken.trim(),
+        whatsapp_verify_token: whatsappVerifyToken,
+        whatsapp_auto_reply_enabled: whatsappAutoReplyEnabled,
         updated_at: new Date().toISOString(),
       };
 
       if (existingSettingId) {
-        // Update existing record
         const { data, error } = await supabase
           .from('agent_settings')
           .update(payload)
@@ -160,35 +290,23 @@ export default function Calling() {
           .select();
 
         if (error) throw error;
-
         if (data && data.length > 0) {
-          console.log('Successfully updated agent settings:', data[0]);
           setExistingSettingId(data[0].id);
-          setBusinessPhone(data[0].business_phone || '8302692120');
-          setKnowledgeBase(data[0].knowledge_base || '');
         }
       } else {
-        // Insert new record
         const { data, error } = await supabase
           .from('agent_settings')
           .insert([payload])
           .select();
 
         if (error) throw error;
-
         if (data && data.length > 0) {
-          console.log('Successfully inserted agent settings:', data[0]);
           setExistingSettingId(data[0].id);
-          setBusinessPhone(data[0].business_phone || '8302692120');
-          setKnowledgeBase(data[0].knowledge_base || '');
         }
       }
 
-      setSuccessMessage('Saved — your AI agent is now updated with this data.');
-
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 4500);
+      setSuccessMessage('Voice, SMS, WhatsApp, and Knowledge Base successfully saved to Supabase!');
+      setTimeout(() => setSuccessMessage(null), 4500);
     } catch (err) {
       console.error('Error saving agent settings:', err);
       setErrorMessage(err.message || 'Failed to save settings. Please check database connection.');
@@ -200,15 +318,12 @@ export default function Calling() {
   // ==========================================
   // Web Voice Agent Logic (Speech API Loop)
   // ==========================================
-
-  // Speech Recognition Listener
   const startListening = (convId) => {
     if (!activeCallRef.current) return;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    // Stop any existing instance
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
@@ -221,7 +336,7 @@ export default function Calling() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'en-IN';
+      recognition.lang = selectedAccent;
       recognitionRef.current = recognition;
 
       recognition.onstart = () => {
@@ -239,7 +354,6 @@ export default function Calling() {
           return;
         }
 
-        // 1. Add customer message to live transcript
         setTranscript((prev) => [
           ...prev,
           {
@@ -250,23 +364,20 @@ export default function Calling() {
           },
         ]);
 
-        // 2. Transition state to thinking
         setCallState('thinking');
 
-        // 3. Invoke Supabase voice-chat-agent Edge Function
         try {
           const { data, error } = await supabase.functions.invoke('voice-chat-agent', {
             body: {
               conversation_id: convId || activeConvIdRef.current,
               customer_message: customerSpokenText,
+              knowledge_base: knowledgeBase,
+              persona: selectedPersona,
             },
           });
 
           if (!activeCallRef.current) return;
-
-          if (error) {
-            console.error('voice-chat-agent error:', error);
-          }
+          if (error) console.error('voice-chat-agent error:', error);
 
           const aiReply =
             data?.reply ||
@@ -275,7 +386,6 @@ export default function Calling() {
             data?.response ||
             'I have noted that down. Is there anything else I can help you with?';
 
-          // 4. Add AI response to transcript and speak
           setTranscript((prev) => [
             ...prev,
             {
@@ -298,7 +408,6 @@ export default function Calling() {
       recognition.onerror = (event) => {
         console.warn('SpeechRecognition event error:', event.error);
         if (activeCallRef.current && event.error !== 'not-allowed') {
-          // Restart listening on silence/no-speech
           setTimeout(() => {
             if (activeCallRef.current && callState !== 'speaking' && callState !== 'thinking') {
               startListening(convId);
@@ -309,7 +418,6 @@ export default function Calling() {
 
       recognition.onend = () => {
         if (activeCallRef.current && callState === 'listening') {
-          // Silence timeout: re-arm listener
           setTimeout(() => {
             if (activeCallRef.current && callState === 'listening') {
               startListening(convId);
@@ -327,7 +435,6 @@ export default function Calling() {
     }
   };
 
-  // Speech Synthesis Speaker
   const speakAiResponse = (text, convId) => {
     if (!activeCallRef.current || typeof window === 'undefined' || !window.speechSynthesis) return;
 
@@ -336,7 +443,7 @@ export default function Calling() {
       setCallState('speaking');
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-IN';
+      utterance.lang = selectedAccent;
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
 
@@ -362,7 +469,6 @@ export default function Calling() {
     }
   };
 
-  // Start Voice Call Handler
   const handleStartCall = async () => {
     activeCallRef.current = true;
     setTranscript([]);
@@ -370,19 +476,17 @@ export default function Calling() {
     setCallState('thinking');
 
     try {
-      // 1. Initial invoke to create conversation and receive greeting
       const { data, error } = await supabase.functions.invoke('voice-chat-agent', {
         body: {
           conversation_id: null,
           customer_message: null,
+          knowledge_base: knowledgeBase,
+          persona: selectedPersona,
         },
       });
 
       if (!activeCallRef.current) return;
-
-      if (error) {
-        console.error('Initial voice-chat-agent invoke error:', error);
-      }
+      if (error) console.error('Initial voice-chat-agent invoke error:', error);
 
       const returnedConvId = data?.conversation_id || data?.conversationId || null;
       if (returnedConvId) {
@@ -395,9 +499,8 @@ export default function Calling() {
         data?.message ||
         data?.greeting ||
         data?.ai_response ||
-        'Hello! Thank you for calling. How can I assist you today?';
+        'Hello! Thank you for calling Pravaah. How can I help you today?';
 
-      // 2. Add greeting to transcript
       setTranscript([
         {
           id: `ai-${Date.now()}`,
@@ -407,7 +510,6 @@ export default function Calling() {
         },
       ]);
 
-      // 3. Speak greeting and start loop
       speakAiResponse(greeting, returnedConvId);
     } catch (err) {
       console.error('Failed to start voice call:', err);
@@ -418,7 +520,6 @@ export default function Calling() {
     }
   };
 
-  // End Voice Call Handler
   const handleEndCall = () => {
     activeCallRef.current = false;
 
@@ -445,356 +546,619 @@ export default function Calling() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl mx-auto animate-fadeIn font-sans selection:bg-[#0058be] selection:text-white pb-12">
-      {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#e5eeff]">
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto animate-fadeIn font-sans selection:bg-[#0058be] selection:text-white pb-14">
+      {/* 1. Page Executive Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#e5eeff]">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
-              Calling Agent Setup
+              Omnichannel Telephony & Messaging Hub
             </h1>
-            <Badge variant="accent" size="sm" className="font-semibold shadow-xs">
-              Voice Calling — Coming Soon
+            <Badge variant="success" dot pulse size="sm" className="font-semibold shadow-xs">
+              Voice • SMS • WhatsApp
             </Badge>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-[#45464d] leading-relaxed">
-            Configure your business knowledge base and phone number to train the AI voice agent for inbound customer calls in English or Hindi.
+            Configure 24/7 AI voice reception, automated SMS confirmations, and Meta WhatsApp Business Cloud API automated customer messaging.
           </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="https://developers.facebook.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-[#dce9ff] text-[#0b1c30] hover:text-[#0c9488] hover:border-[#0c9488] transition-colors shadow-xs"
+          >
+            <span>Meta Developers</span>
+            <ExternalLink className="w-3.5 h-3.5 text-[#0c9488]" />
+          </a>
         </div>
       </div>
 
-      {/* 2. Loading State on Initial Fetch */}
       {isLoading ? (
         <Card variant="default" className="p-12 text-center flex flex-col items-center justify-center gap-3 bg-white border-[#e5eeff] rounded-2xl shadow-xs">
           <Loader2 className="w-8 h-8 animate-spin text-[#0058be]" />
-          <p className="text-xs sm:text-sm text-[#76777d]">Loading agent settings from Supabase...</p>
+          <p className="text-xs sm:text-sm text-[#76777d]">Loading channels configuration from Supabase...</p>
         </Card>
       ) : (
-        /* 3. Main Settings Form Card */
-        <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e5eeff] p-5 sm:p-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
-                <Layers className="w-5 h-5" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-bold text-[#0b1c30]">
-                  AI Voice Agent Knowledge & Routing
-                </CardTitle>
-                <CardDescription className="text-xs text-[#45464d]">
-                  This raw context will be referenced by the AI during voice conversations.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column: Voice, SMS & WhatsApp Settings (7 Cols) */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            {/* Inbound Phone & Voice Webhook Card */}
+            <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-[#0b1c30] text-white p-5 sm:p-6 border-b border-[#131b2e]">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#131b2e] border border-[#213145] text-[#89f5e7] flex items-center justify-center">
+                      <Radio className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-white flex items-center gap-2">
+                        Inbound Voice Line
+                        <Badge variant="success" size="sm" className="text-[10px] bg-[#0c9488]/20 text-[#89f5e7] border-[#0c9488]/40">
+                          Active
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-xs text-[#adc6ff]">
+                        Assigned Telephony Number & Voice Webhook
+                      </CardDescription>
+                    </div>
+                  </div>
 
-          <CardContent className="p-5 sm:p-6 flex flex-col gap-6">
-            {/* Inline Notifications */}
-            {successMessage && (
-              <div className="p-4 rounded-xl bg-[#e6fcf8] border border-[#89f5e7] text-[#005049] flex items-center gap-3 animate-fadeIn">
-                <CheckCircle2 className="w-5 h-5 text-[#0c9488] shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold">{successMessage}</span>
-              </div>
-            )}
+                  <div className="font-mono text-sm font-bold text-[#89f5e7] px-3 py-1 rounded-lg bg-[#131b2e] border border-[#213145]">
+                    +{businessPhone || '8302692120'}
+                  </div>
+                </div>
+              </CardHeader>
 
-            {errorMessage && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 animate-fadeIn">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold">{errorMessage}</span>
-              </div>
-            )}
+              <CardContent className="p-5 sm:p-6 flex flex-col gap-5">
+                {/* Voice Webhook URL Endpoint Box */}
+                <div className="p-4 rounded-xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#0b1c30] flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-[#0058be]" />
+                      <span>Post-Call Voice Webhook Endpoint URL</span>
+                    </span>
+                    <button
+                      onClick={handleCopyWebhook}
+                      className="text-xs font-semibold text-[#0058be] hover:text-[#004395] flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedWebhook ? <Check className="w-3.5 h-3.5 text-[#0c9488]" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedWebhook ? 'Copied!' : 'Copy Webhook'}</span>
+                    </button>
+                  </div>
+                  <div className="font-mono text-xs text-[#45464d] bg-white p-2.5 rounded-lg border border-[#e5eeff] break-all select-all">
+                    {voiceWebhookEndpoint}
+                  </div>
+                </div>
 
-            <form onSubmit={handleSaveSettings} className="flex flex-col gap-6">
-              {/* Business Phone Number */}
-              <div className="flex flex-col gap-1.5">
-                <Input
-                  label="Business Phone Number"
-                  placeholder="+91 9413973399"
-                  value={businessPhone}
-                  onChange={(e) => setBusinessPhone(e.target.value)}
-                  startIcon={<Phone className="w-4 h-4 text-[#76777d]" />}
-                  helperText="Customers will call this number and the AI will answer using the knowledge below."
-                  size="md"
-                  className="bg-white border-[#dce9ff]"
-                />
-                <p className="text-[11px] text-[#76777d]">
-                  Customers will call this number and the AI will answer using the knowledge below.
-                </p>
-              </div>
+                {/* Voice Credentials */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Voice Agent ID"
+                    placeholder="e.g. 243470"
+                    value={omnidimAgentId}
+                    onChange={(e) => setOmnidimAgentId(e.target.value)}
+                    helperText="Agent ID from your voice provider."
+                    size="sm"
+                    className="bg-white border-[#dce9ff]"
+                  />
+                  <Input
+                    label="Business Phone Number"
+                    placeholder="+1 8302692120"
+                    value={businessPhone}
+                    onChange={(e) => setBusinessPhone(e.target.value)}
+                    startIcon={<Phone className="w-3.5 h-3.5 text-[#76777d]" />}
+                    helperText="Customers dial this number to speak or text."
+                    size="sm"
+                    className="bg-white border-[#dce9ff]"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Business Knowledge Base Textarea */}
-              <div className="flex flex-col gap-1.5 font-sans">
-                <label className="text-xs font-semibold text-[#0b1c30] select-none flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-[#0058be]" />
-                    <span>Business Knowledge Base</span>
-                  </span>
-                  <span className="text-[11px] font-normal text-[#76777d]">
-                    {knowledgeBase.length.toLocaleString()} characters
-                  </span>
-                </label>
+            {/* WhatsApp Business Cloud API Card (NEW FEATURE) */}
+            <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-[#f0fdf4] border-b border-[#bbf7d0] p-5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#25D366] text-white flex items-center justify-center shadow-xs">
+                      <Share2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-bold text-[#14532d] flex items-center gap-2">
+                        WhatsApp Business Cloud API
+                        <Badge variant="success" size="sm" className="text-[10px] bg-[#25D366]/20 text-[#166534] border-[#25D366]/40">
+                          Meta Ready
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-[11px] text-[#15803d]">
+                        Direct 24/7 AI conversations on official WhatsApp Business
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 flex flex-col gap-5">
+                {/* WhatsApp Webhook & Verify Token Box */}
+                <div className="p-3.5 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#14532d] flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-[#16a34a]" />
+                        <span>Callback URL (Webhook)</span>
+                      </span>
+                      <button
+                        onClick={handleCopyWaWebhook}
+                        className="text-xs font-semibold text-[#16a34a] hover:text-[#15803d] flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedWaWebhook ? <Check className="w-3.5 h-3.5 text-[#16a34a]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedWaWebhook ? 'Copied!' : 'Copy URL'}</span>
+                      </button>
+                    </div>
+                    <div className="font-mono text-[11px] text-[#14532d] bg-white p-2 rounded-lg border border-[#bbf7d0] break-all select-all">
+                      {whatsappWebhookEndpoint}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#14532d]">Verify Token (Meta Handshake)</span>
+                      <button
+                        onClick={handleCopyWaToken}
+                        className="text-xs font-semibold text-[#16a34a] hover:text-[#15803d] flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedWaToken ? <Check className="w-3.5 h-3.5 text-[#16a34a]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedWaToken ? 'Copied!' : 'Copy Token'}</span>
+                      </button>
+                    </div>
+                    <div className="font-mono text-[11px] text-[#14532d] bg-white p-2 rounded-lg border border-[#bbf7d0] select-all">
+                      {whatsappVerifyToken}
+                    </div>
+                  </div>
+                </div>
+
+                {/* WhatsApp Toggles & Fields */}
+                <div className="p-3.5 rounded-xl bg-white border border-[#e5eeff] flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-[#0b1c30] block">
+                      24/7 AI WhatsApp Auto-Pilot
+                    </span>
+                    <span className="text-[11px] text-[#76777d]">
+                      AI automatically replies to WhatsApp messages using your Knowledge Base.
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={whatsappAutoReplyEnabled}
+                    onChange={(e) => setWhatsappAutoReplyEnabled(e.target.checked)}
+                    className="w-5 h-5 accent-[#16a34a] rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="WhatsApp Phone Number ID"
+                    placeholder="e.g. 1049283749284"
+                    value={whatsappPhoneNumberId}
+                    onChange={(e) => setWhatsappPhoneNumberId(e.target.value)}
+                    helperText="From Meta App Dashboard > WhatsApp > API Setup"
+                    size="sm"
+                    className="bg-white border-[#dce9ff]"
+                  />
+                  <Input
+                    label="Meta Permanent Access Token"
+                    type="password"
+                    placeholder="EAABw..."
+                    value={whatsappAccessToken}
+                    onChange={(e) => setWhatsappAccessToken(e.target.value)}
+                    helperText="System User token with whatsapp_business_messaging"
+                    size="sm"
+                    className="bg-white border-[#dce9ff]"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SMS Automations & Two-Way Texting Card */}
+            <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-[#f8f9ff] border-b border-[#e5eeff] p-5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#eff4ff] text-[#0058be] flex items-center justify-center">
+                      <Smartphone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-bold text-[#0b1c30] flex items-center gap-2">
+                        SMS Service Automations & Auto-Followups
+                        <Badge variant="accent" size="sm" className="text-[10px]">
+                          2-Way SMS
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-[11px] text-[#45464d]">
+                        Automate text replies, missed-call recovery, and post-booking confirmations
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 flex flex-col gap-5">
+                {/* SMS Inbound Webhook Endpoint */}
+                <div className="p-3.5 rounded-xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#0b1c30] flex items-center gap-1.5">
+                      <MessageCircle className="w-3.5 h-3.5 text-[#0058be]" />
+                      <span>Inbound SMS Webhook URL</span>
+                    </span>
+                    <button
+                      onClick={handleCopySmsWebhook}
+                      className="text-xs font-semibold text-[#0058be] hover:text-[#004395] flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedSmsWebhook ? <Check className="w-3.5 h-3.5 text-[#0c9488]" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedSmsWebhook ? 'Copied!' : 'Copy SMS URL'}</span>
+                    </button>
+                  </div>
+                  <div className="font-mono text-xs text-[#45464d] bg-white p-2 rounded-lg border border-[#e5eeff] break-all select-all">
+                    {smsWebhookEndpoint}
+                  </div>
+                </div>
+
+                {/* SMS Toggles */}
+                <div className="flex flex-col gap-3">
+                  <div className="p-3.5 rounded-xl bg-white border border-[#e5eeff] flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-[#0b1c30] block">
+                        24/7 AI Two-Way SMS Auto-Reply
+                      </span>
+                      <span className="text-[11px] text-[#76777d]">
+                        When customers text your number, Pravaah AI replies automatically in under 2s.
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={smsAutoReplyEnabled}
+                      onChange={(e) => setSmsAutoReplyEnabled(e.target.checked)}
+                      className="w-5 h-5 accent-[#0058be] rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white border border-[#e5eeff] flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-[#0b1c30] block">
+                        Instant Post-Call SMS Follow-up
+                      </span>
+                      <span className="text-[11px] text-[#76777d]">
+                        Automatically text callers a calendar booking or thank-you link when phone calls end.
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={smsPostCallEnabled}
+                      onChange={(e) => setSmsPostCallEnabled(e.target.checked)}
+                      className="w-5 h-5 accent-[#0058be] rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white border border-[#e5eeff] flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-[#0b1c30] block">
+                        Missed-Call Instant Text Back
+                      </span>
+                      <span className="text-[11px] text-[#76777d]">
+                        If a phone call is missed, instantly send a text to recover and qualify the lead.
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={smsMissedCallEnabled}
+                      onChange={(e) => setSmsMissedCallEnabled(e.target.checked)}
+                      className="w-5 h-5 accent-[#0058be] rounded cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {smsPostCallEnabled && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#0b1c30]">Post-Call SMS Message Text</label>
+                    <textarea
+                      rows={2}
+                      value={smsPostCallText}
+                      onChange={(e) => setSmsPostCallText(e.target.value)}
+                      className="w-full bg-[#f8f9ff] text-[#0b1c30] text-xs p-3 rounded-xl border border-[#dce9ff] focus:outline-none focus:border-[#0058be]"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Persona & Language Selection */}
+            <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-[#f8f9ff] border-b border-[#e5eeff] p-5">
+                <div className="flex items-center gap-2.5">
+                  <Sliders className="w-4 h-4 text-[#0058be]" />
+                  <CardTitle className="text-sm font-bold text-[#0b1c30]">
+                    Agent Persona & Voice Customization
+                  </CardTitle>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-[#0b1c30]">Select Voice, SMS & WhatsApp Agent Persona</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {VOICE_PERSONAS.map((persona) => {
+                      const IconC = persona.icon;
+                      const isSelected = selectedPersona === persona.id;
+                      return (
+                        <button
+                          key={persona.id}
+                          type="button"
+                          onClick={() => setSelectedPersona(persona.id)}
+                          className={`p-3.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col gap-1.5 ${
+                            isSelected
+                              ? 'bg-[#eff4ff] border-[#0058be] text-[#004395] shadow-xs'
+                              : 'bg-white border-[#dce9ff] hover:border-[#0058be]/50 text-[#45464d]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-xs text-[#0b1c30]">{persona.name}</span>
+                            <IconC className={`w-4 h-4 ${isSelected ? 'text-[#0058be]' : 'text-[#76777d]'}`} />
+                          </div>
+                          <p className="text-[11px] leading-tight text-[#45464d]">{persona.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-[#0b1c30]">Language & Regional Accent</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {ACCENT_OPTIONS.map((acc) => (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => setSelectedAccent(acc.id)}
+                        className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          selectedAccent === acc.id
+                            ? 'bg-[#0058be] text-white border-[#0058be] shadow-xs'
+                            : 'bg-white text-[#45464d] border-[#dce9ff] hover:border-[#0058be]'
+                        }`}
+                      >
+                        <span>{acc.flag}</span>
+                        <span>{acc.label.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Knowledge Base Editor Card */}
+            <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden">
+              <CardHeader className="bg-[#f8f9ff] border-b border-[#e5eeff] p-5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#0058be]" />
+                    <CardTitle className="text-sm font-bold text-[#0b1c30]">
+                      Unified Knowledge Base (Voice, SMS & WhatsApp)
+                    </CardTitle>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-[#76777d]">Templates:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate('clinic')}
+                      className="text-[11px] font-semibold text-[#0058be] hover:underline cursor-pointer"
+                    >
+                      + Dental Clinic
+                    </button>
+                    <span className="text-[#dce9ff]">|</span>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate('saas')}
+                      className="text-[11px] font-semibold text-[#0058be] hover:underline cursor-pointer"
+                    >
+                      + SaaS Pricing
+                    </button>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-5 flex flex-col gap-4">
+                {successMessage && (
+                  <div className="p-3.5 rounded-xl bg-[#e6fcf8] border border-[#89f5e7] text-[#005049] flex items-center gap-2.5 text-xs font-semibold animate-fadeIn">
+                    <CheckCircle2 className="w-4 h-4 text-[#0c9488] shrink-0" />
+                    <span>{successMessage}</span>
+                  </div>
+                )}
+
+                {errorMessage && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-2.5 text-xs font-semibold animate-fadeIn">
+                    <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
 
                 <textarea
-                  rows={12}
+                  rows={8}
                   value={knowledgeBase}
                   onChange={(e) => setKnowledgeBase(e.target.value)}
-                  placeholder="Paste your business information here — services, pricing, FAQs, policies, working hours, anything the AI should know before talking to customers. You can paste text extracted from PDFs, Word docs, or just type directly."
-                  className="w-full bg-[#f8f9ff] text-[#0b1c30] placeholder:text-[#76777d] border border-[#dce9ff] rounded-xl p-4 text-xs sm:text-sm leading-relaxed transition-all duration-200 focus:outline-none focus:border-[#0058be] focus:ring-1 focus:ring-[#0058be] min-h-[300px] resize-y"
+                  placeholder="Paste company FAQs, pricing, operating hours, and booking rules. Voice, SMS, and WhatsApp AI services will all reference this knowledge base."
+                  className="w-full bg-[#f8f9ff] text-[#0b1c30] placeholder:text-[#76777d] border border-[#dce9ff] rounded-xl p-4 text-xs leading-relaxed transition-all focus:outline-none focus:border-[#0058be] focus:ring-1 focus:ring-[#0058be] resize-y"
                 />
 
-                <div className="flex items-center justify-between text-[11px] text-[#76777d] mt-1">
-                  <span>Supports multiline text, FAQ pairs, pricing structures, and company guidelines.</span>
-                  <span>{knowledgeBase.trim() ? `${knowledgeBase.trim().split(/\s+/).length} words` : '0 words'}</span>
+                <div className="flex items-center justify-between text-[11px] text-[#76777d]">
+                  <span>{knowledgeBase.length.toLocaleString()} characters ({knowledgeBase.trim() ? knowledgeBase.trim().split(/\s+/).length : 0} words)</span>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="font-bold text-xs rounded-xl shadow-xs"
+                    leftIcon={isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  >
+                    {isSaving ? 'Syncing...' : 'Save All Channels'}
+                  </Button>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-[#e5eeff] flex items-center justify-end gap-3">
-                <Button
-                  type="submit"
-                  variant="accent"
-                  size="md"
-                  disabled={!knowledgeBase.trim() || isSaving}
-                  isLoading={isSaving}
-                  leftIcon={!isSaving && <Save className="w-4 h-4" />}
-                  className="font-bold px-6 shadow-[0_4px_14px_rgba(0,88,190,0.25)]"
-                >
-                  {isSaving ? 'Saving Settings...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 4. Try It Now — Browser Speech Demo Card */}
-      <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_2px_8px_rgba(11,28,48,0.04)] rounded-2xl overflow-hidden">
-        <CardHeader className="bg-[#f8f9ff] border-b border-[#e5eeff] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
-              <Volume2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-base font-bold text-[#0b1c30]">
-                  Try It Now — Talk to Your AI Agent
-                </CardTitle>
-                <Badge variant="success" size="sm" dot pulse className="text-[10px]">
-                  Web Voice Demo
-                </Badge>
-              </div>
-              <CardDescription className="text-xs text-[#45464d] mt-0.5">
-                Works best in Google Chrome. Click Start Call and allow microphone access when prompted.
-              </CardDescription>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {callState !== 'idle' && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleEndCall}
-              leftIcon={<PhoneOff className="w-3.5 h-3.5" />}
-              className="font-bold shrink-0 shadow-xs"
-            >
-              End Call
-            </Button>
-          )}
-        </CardHeader>
-
-        <CardContent className="p-6 flex flex-col gap-6">
-          {!speechSupported ? (
-            <div className="p-8 text-center flex flex-col items-center justify-center gap-2 bg-[#f8f9ff] rounded-2xl border border-[#e5eeff]">
-              <AlertCircle className="w-6 h-6 text-[#76777d]" />
-              <p className="text-xs sm:text-sm font-semibold text-[#0b1c30]">
-                Voice demo requires Google Chrome
-              </p>
-              <p className="text-xs text-[#76777d] max-w-sm">
-                The Web Speech API is not supported in this browser. Please open this page in Google Chrome to test direct voice calling.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-4">
-              {/* Large Interactive Call Button */}
-              <div className="flex flex-col items-center justify-center gap-3">
-                {callState === 'idle' && (
-                  <button
-                    type="button"
-                    onClick={handleStartCall}
-                    className="w-20 h-20 rounded-full bg-[#0058be] hover:bg-[#2170e4] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(0,88,190,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer group"
-                    aria-label="Start Voice Call"
-                  >
-                    <Mic className="w-8 h-8 group-hover:scale-110 transition-transform" />
-                  </button>
-                )}
-
-                {callState === 'listening' && (
-                  <div className="relative flex items-center justify-center">
-                    <span className="animate-ping absolute inline-flex h-24 w-24 rounded-full bg-red-400 opacity-60" />
-                    <button
-                      type="button"
-                      onClick={handleEndCall}
-                      className="relative w-20 h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_0_8px_rgba(239,68,68,0.25)] transition-all cursor-pointer"
-                      aria-label="Listening to your voice. Click to end call."
-                    >
-                      <Mic className="w-8 h-8 animate-pulse" />
-                    </button>
+          {/* Right Column: In-Browser AI Voice Sandbox (5 Cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <Card variant="default" className="bg-[#0b1c30] text-white border border-[#131b2e] shadow-xl rounded-3xl overflow-hidden flex flex-col justify-between sticky top-24">
+              <CardHeader className="bg-[#131b2e] border-b border-[#213145] p-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-2.5 w-2.5 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0c9488] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0c9488]" />
+                    </span>
+                    <CardTitle className="text-sm font-bold text-white">
+                      Voice Agent Test Sandbox
+                    </CardTitle>
                   </div>
-                )}
-
-                {callState === 'thinking' && (
-                  <div className="w-20 h-20 rounded-full bg-[#0058be] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(0,88,190,0.35)]">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  </div>
-                )}
-
-                {callState === 'speaking' && (
-                  <div className="relative flex items-center justify-center">
-                    <span className="animate-ping absolute inline-flex h-24 w-24 rounded-full bg-[#0058be] opacity-50" />
-                    <button
-                      type="button"
-                      onClick={handleEndCall}
-                      className="relative w-20 h-20 rounded-full bg-[#0058be] text-white flex items-center justify-center shadow-[0_0_0_8px_rgba(0,88,190,0.25)] transition-all cursor-pointer"
-                      aria-label="AI is speaking. Click to end call."
-                    >
-                      <Volume2 className="w-8 h-8 animate-bounce" />
-                    </button>
-                  </div>
-                )}
-
-                {/* State Label and Guidance */}
-                <div className="text-center mt-2">
-                  {callState === 'idle' && (
-                    <>
-                      <span className="font-heading font-bold text-sm text-[#0b1c30] block">
-                        Start Call
-                      </span>
-                      <span className="text-xs text-[#76777d] mt-0.5 block">
-                        Click to initiate interactive voice dialogue
-                      </span>
-                    </>
-                  )}
-
-                  {callState === 'listening' && (
-                    <>
-                      <span className="font-heading font-bold text-sm text-red-600 flex items-center justify-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-                        Listening...
-                      </span>
-                      <span className="text-xs text-[#45464d] mt-0.5 block">
-                        Speak clearly in English or Hindi
-                      </span>
-                    </>
-                  )}
-
-                  {callState === 'thinking' && (
-                    <>
-                      <span className="font-heading font-bold text-sm text-[#0058be] block">
-                        Thinking...
-                      </span>
-                      <span className="text-xs text-[#76777d] mt-0.5 block">
-                        AI voice model is analyzing your query
-                      </span>
-                    </>
-                  )}
-
-                  {callState === 'speaking' && (
-                    <>
-                      <span className="font-heading font-bold text-sm text-[#0058be] flex items-center justify-center gap-1.5">
-                        <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#0058be]" />
-                        Speaking...
-                      </span>
-                      <span className="text-xs text-[#45464d] mt-0.5 block">
-                        Playing response via speaker audio
-                      </span>
-                    </>
-                  )}
+                  <Badge variant="accent" size="sm" className="text-[10px] bg-[#213145] text-[#adc6ff] border-[#324866]">
+                    Browser Simulator
+                  </Badge>
                 </div>
-              </div>
+                <CardDescription className="text-xs text-[#adc6ff] mt-1">
+                  Rehearse and test how your AI sounds with your knowledge base before taking real phone calls.
+                </CardDescription>
+              </CardHeader>
 
-              {/* Live Transcript Stream */}
-              {transcript.length > 0 && (
-                <div className="w-full mt-6 pt-6 border-t border-[#e5eeff] flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[#0058be]" />
-                      <h4 className="font-heading font-bold text-xs text-[#0b1c30] uppercase tracking-wider">
-                        Live Call Transcript
-                      </h4>
-                    </div>
-                    <span className="text-[11px] text-[#76777d] font-mono">
-                      {transcript.length} {transcript.length === 1 ? 'message' : 'messages'}
+              <CardContent className="p-5 flex flex-col gap-4">
+                {/* Visualizer Status Orb */}
+                <div className="p-6 rounded-2xl bg-[#131b2e]/60 border border-[#213145] flex flex-col items-center justify-center gap-3">
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      callState === 'listening'
+                        ? 'bg-red-500/20 text-red-400 border-2 border-red-400 animate-pulse scale-110 shadow-[0_0_20px_rgba(239,68,68,0.4)]'
+                        : callState === 'thinking'
+                        ? 'bg-amber-500/20 text-amber-300 border-2 border-amber-400 animate-spin'
+                        : callState === 'speaking'
+                        ? 'bg-[#0058be]/30 text-[#89f5e7] border-2 border-[#89f5e7] animate-pulse scale-105 shadow-[0_0_20px_rgba(0,88,190,0.5)]'
+                        : 'bg-white/10 text-white/60 border border-white/15'
+                    }`}
+                  >
+                    {callState === 'listening' ? (
+                      <Mic className="w-7 h-7 text-red-400" />
+                    ) : callState === 'thinking' ? (
+                      <Loader2 className="w-7 h-7 text-amber-300 animate-spin" />
+                    ) : callState === 'speaking' ? (
+                      <Volume2 className="w-7 h-7 text-[#89f5e7]" />
+                    ) : (
+                      <Phone className="w-7 h-7" />
+                    )}
+                  </div>
+
+                  <div className="text-center">
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#89f5e7] block">
+                      {callState === 'idle' && 'Ready for Test Call'}
+                      {callState === 'listening' && 'Listening to Your Microphone...'}
+                      {callState === 'thinking' && 'AI Generating Voice Response...'}
+                      {callState === 'speaking' && 'AI Speaking Response...'}
+                    </span>
+                    <span className="text-[11px] text-[#adc6ff]">
+                      {callState === 'idle' ? 'Click below to start a live audio session.' : 'Speak into your microphone.'}
                     </span>
                   </div>
 
-                  <div className="max-h-80 overflow-y-auto p-4 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] flex flex-col gap-3.5">
-                    {transcript.map((item) => {
-                      const isAi = item.sender === 'ai';
+                  {(callState === 'speaking' || callState === 'listening') && (
+                    <div className="flex items-center gap-1.5 h-6 mt-1">
+                      <div className="w-1 bg-[#89f5e7] h-3 animate-pulse" />
+                      <div className="w-1 bg-[#89f5e7] h-6 animate-pulse delay-75" />
+                      <div className="w-1 bg-[#89f5e7] h-4 animate-pulse delay-150" />
+                      <div className="w-1 bg-[#89f5e7] h-5 animate-pulse delay-100" />
+                      <div className="w-1 bg-[#89f5e7] h-2 animate-pulse delay-200" />
+                    </div>
+                  )}
+                </div>
 
-                      return (
+                {/* Live Transcript Stream */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs text-[#adc6ff]">
+                    <span className="font-semibold flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Live Speech Transcript</span>
+                    </span>
+                    {transcript.length > 0 && (
+                      <button
+                        onClick={() => setTranscript([])}
+                        className="text-[10px] text-[#adc6ff] hover:text-white underline cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="h-52 bg-[#131b2e] rounded-xl p-3.5 border border-[#213145] overflow-y-auto flex flex-col gap-2.5 text-xs">
+                    {transcript.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center text-[#7c839b] gap-1">
+                        <Bot className="w-5 h-5 text-[#324866]" />
+                        <span>No dialogue yet. Click "Start Test Call" to begin speaking.</span>
+                      </div>
+                    ) : (
+                      transcript.map((msg) => (
                         <div
-                          key={item.id}
-                          className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${
-                            isAi ? 'self-end flex-row-reverse' : 'self-start'
+                          key={msg.id}
+                          className={`flex flex-col gap-1 max-w-[85%] ${
+                            msg.sender === 'ai' ? 'self-start items-start' : 'self-end items-end'
                           }`}
                         >
-                          {/* Avatar */}
+                          <div className="flex items-center gap-1 text-[10px] text-[#7c839b]">
+                            <span>{msg.sender === 'ai' ? 'Pravaah AI' : 'You (Caller)'}</span>
+                            <span>•</span>
+                            <span>{formatDialogueTime(msg.time)}</span>
+                          </div>
                           <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-xs ${
-                              isAi
-                                ? 'bg-[#0058be] text-white'
-                                : 'bg-white border border-[#dce9ff] text-[#0058be]'
+                            className={`p-2.5 rounded-xl leading-relaxed ${
+                              msg.sender === 'ai'
+                                ? 'bg-[#213145] text-white rounded-tl-none border border-[#324866]'
+                                : 'bg-[#0058be] text-white rounded-tr-none'
                             }`}
                           >
-                            {isAi ? <Sparkles className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
-                          </div>
-
-                          {/* Bubble */}
-                          <div className="flex flex-col gap-1">
-                            <div
-                              className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                                isAi
-                                  ? 'bg-[#0058be] text-white rounded-tr-xs shadow-xs'
-                                  : 'bg-white text-[#0b1c30] border border-[#e5eeff] rounded-tl-xs shadow-xs'
-                              }`}
-                            >
-                              <p className="whitespace-pre-wrap">{item.text}</p>
-                            </div>
-
-                            <span
-                              className={`text-[10px] text-[#76777d] font-mono flex items-center gap-1 ${
-                                isAi ? 'justify-end' : 'justify-start'
-                              }`}
-                            >
-                              {formatDialogueTime(item.time)}
-                            </span>
+                            {msg.text}
                           </div>
                         </div>
-                      );
-                    })}
+                      ))
+                    )}
                     <div ref={transcriptEndRef} />
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* 5. Muted Informational Roadmap Callout Card */}
-      <div className="p-5 rounded-2xl bg-[#eff4ff]/70 border border-[#d8e2ff] flex items-start gap-3.5 text-xs text-[#004395]">
-        <div className="p-2 rounded-xl bg-white text-[#0058be] border border-[#d8e2ff] shrink-0 shadow-xs">
-          <Info className="w-4 h-4" />
+                {/* Call Control Button */}
+                <div className="pt-1">
+                  {callState === 'idle' ? (
+                    <button
+                      type="button"
+                      onClick={handleStartCall}
+                      className="w-full py-3.5 rounded-xl bg-[#0058be] hover:bg-[#2170e4] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,88,190,0.35)] transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <Phone className="w-4 h-4 text-[#89f5e7]" />
+                      <span>Start Voice Simulator Session</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleEndCall}
+                      className="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(220,38,38,0.35)] transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                      <span>End Test Call</span>
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-heading font-bold text-xs text-[#0b1c30] mb-0.5">
-            Voice Agent Pipeline in Development
-          </h4>
-          <p className="text-[#45464d] leading-relaxed">
-            Once connected, calls to this number will be answered by the AI using the knowledge base above — in English or Hindi depending on how the customer speaks. Voice call handling is being built next.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
