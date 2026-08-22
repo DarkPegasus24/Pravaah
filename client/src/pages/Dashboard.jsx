@@ -1,27 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
-  Sparkles,
   ArrowRight,
-  TrendingUp,
-  Calendar,
-  Zap,
-  FileText,
   Clock,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  CheckCheck,
-  UserCheck,
-  Building2,
-  Layers,
-  Bot,
+  Loader2,
+  Calendar,
   Send,
-  Sliders,
-  ShieldCheck,
-  HelpCircle,
-  ExternalLink,
+  User,
+  PhoneCall,
+  Sparkles,
+  BarChart3,
 } from 'lucide-react';
 import {
   Card,
@@ -29,18 +18,136 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
   Badge,
   Button,
-  Modal,
 } from '../components/ui';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  // Active channel filter
-  const [selectedChannel, setSelectedChannel] = useState('all');
+  // Real Supabase data states
+  const [totalConversations, setTotalConversations] = useState(0);
+  const [newTodayCount, setNewTodayCount] = useState(0);
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [recentConversations, setRecentConversations] = useState([]);
+  const [weeklyActivity, setWeeklyActivity] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchDashboardData() {
+      try {
+        setIsLoading(true);
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfTodayISO = startOfToday.toISOString();
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        // Fetch all stats, recent conversations, and 7-day timestamps in parallel
+        const [
+          totalConvRes,
+          newTodayRes,
+          totalMsgRes,
+          recentConvRes,
+          weeklyConvRes,
+        ] = await Promise.all([
+          // 1. Total conversations count
+          supabase.from('conversations').select('*', { count: 'exact', head: true }),
+          // 2. New Today conversations count (created_at >= local start of today)
+          supabase
+            .from('conversations')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', startOfTodayISO),
+          // 3. Total messages count
+          supabase.from('messages').select('*', { count: 'exact', head: true }),
+          // 4. 5 most recent conversations
+          supabase
+            .from('conversations')
+            .select('id, customer_name, customer_contact, status, updated_at')
+            .order('updated_at', { ascending: false })
+            .limit(5),
+          // 5. Created timestamps for the last 7 days to build real activity bar
+          supabase
+            .from('conversations')
+            .select('created_at')
+            .gte('created_at', sevenDaysAgo.toISOString()),
+        ]);
+
+        if (!isMounted) return;
+
+        if (!totalConvRes.error) {
+          setTotalConversations(totalConvRes.count || 0);
+        }
+
+        if (!newTodayRes.error) {
+          setNewTodayCount(newTodayRes.count || 0);
+        }
+
+        if (!totalMsgRes.error) {
+          setTotalMessages(totalMsgRes.count || 0);
+        }
+
+        if (!recentConvRes.error && recentConvRes.data) {
+          setRecentConversations(recentConvRes.data);
+        }
+
+        // Build real 7-day activity buckets
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dayName = d.toLocaleDateString(undefined, { weekday: 'short' });
+          const dateStr = d.toISOString().split('T')[0];
+          days.push({ dayName, dateStr, count: 0 });
+        }
+
+        if (!weeklyConvRes.error && weeklyConvRes.data) {
+          weeklyConvRes.data.forEach((row) => {
+            if (!row.created_at) return;
+            const rowDate = new Date(row.created_at).toISOString().split('T')[0];
+            const match = days.find((d) => d.dateStr === rowDate);
+            if (match) match.count += 1;
+          });
+        }
+        setWeeklyActivity(days);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return 'Just now';
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return timestamp;
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const maxWeeklyCount = Math.max(...weeklyActivity.map((d) => d.count), 1);
+
+  /*
+  // TODO: re-enable when this feature is built
   // Interactive Approval Queue State
   const [approvals, setApprovals] = useState([
     {
@@ -110,7 +217,6 @@ export default function Dashboard() {
       value: '99.4%',
       change: '+4.8%',
       period: '1,482 actions automated',
-      icon: <Zap className="w-5 h-5 text-[#0058be]" />,
       badge: 'Active Engine',
       badgeVariant: 'success',
     },
@@ -119,7 +225,6 @@ export default function Dashboard() {
       value: '412',
       change: '$1.84M',
       period: 'pipeline generated (88 avg BANT)',
-      icon: <Sparkles className="w-5 h-5 text-[#0058be]" />,
       badge: 'High Intent',
       badgeVariant: 'accent',
     },
@@ -128,7 +233,6 @@ export default function Dashboard() {
       value: '89',
       change: '+24%',
       period: '0 scheduling conflicts',
-      icon: <Calendar className="w-5 h-5 text-[#0058be]" />,
       badge: '24/7 Autopilot',
       badgeVariant: 'secondary',
     },
@@ -137,7 +241,6 @@ export default function Dashboard() {
       value: '164',
       change: '100%',
       period: 'OCR & metadata synced to CRM',
-      icon: <FileText className="w-5 h-5 text-[#0058be]" />,
       badge: 'Verified',
       badgeVariant: 'info',
     },
@@ -146,7 +249,6 @@ export default function Dashboard() {
       value: '142.5h',
       change: '+$18.4k',
       period: 'estimated monthly value created',
-      icon: <Clock className="w-5 h-5 text-[#0058be]" />,
       badge: 'ROI Accelerate',
       badgeVariant: 'success',
     },
@@ -207,29 +309,10 @@ export default function Dashboard() {
       status: 'Completed',
     },
   ];
-
-  const filteredFeed =
-    selectedChannel === 'all'
-      ? activityFeed
-      : activityFeed.filter(
-          (item) => item.channel.toLowerCase() === selectedChannel.toLowerCase()
-        );
-
-  const handleInspect = (item) => {
-    setInspectedActivity(item);
-    setInspectModalOpen(true);
-  };
+  */
 
   return (
     <div className="flex flex-col gap-8 animate-fadeIn font-sans selection:bg-[#0058be] selection:text-white">
-      {/* Toast Notification Alert */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 p-4 rounded-2xl bg-[#0b1c30] text-white border border-[#2170e4] shadow-2xl flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-[#0c9488]" />
-          <span className="text-xs font-semibold">{toastMessage}</span>
-        </div>
-      )}
-
       {/* 1. Executive Operations Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#e5eeff]">
         <div>
@@ -242,456 +325,402 @@ export default function Dashboard() {
             </Badge>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-[#45464d] leading-relaxed">
-            Autonomous multi-channel interaction orchestration, real-time BANT qualification, and workflow execution.
+            Here's what's happening across your business right now.
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => showToast('Refreshed live telemetry data.')}
-            leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-            className="text-xs font-semibold text-[#0058be] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
-          >
-            Sync Telemetry
-          </Button>
-
           <Button
             variant="accent"
             size="sm"
             onClick={() => navigate('/dashboard/conversations')}
             leftIcon={<MessageSquare className="w-3.5 h-3.5" />}
             rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-            className="text-xs font-bold shadow-[0_4px_14px_rgba(0,88,190,0.25)]"
+            className="text-xs font-bold shadow-[0_4px_14px_rgba(0,88,190,0.25)] px-4 py-2"
           >
             Open Conversations Engine
           </Button>
         </div>
       </div>
 
-      {/* 2. Operational Velocity KPI Ribbon (5 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {stats.map((st, idx) => (
-          <Card
-            key={idx}
-            variant="interactive"
-            className="p-5 border-[#e5eeff] hover:border-[#0058be] flex flex-col justify-between bg-white shadow-[0_1px_3px_rgba(11,28,48,0.05)] transition-all"
+      {/* 2. Prominent Real Metric Cards: Total Conversations, New Today, Total Messages */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Card 1: Total Conversations */}
+        <Card
+          variant="interactive"
+          onClick={() => navigate('/dashboard/conversations')}
+          className="p-6 border-[#e5eeff] hover:border-[#0058be] flex flex-col justify-between bg-white shadow-[0_2px_8px_rgba(11,28,48,0.04)] hover:shadow-[0_8px_20px_rgba(0,88,190,0.08)] transition-all cursor-pointer rounded-2xl"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#76777d]">
+                Total Conversations
+              </span>
+              <div className="w-11 h-11 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex items-center justify-center text-[#0058be] shadow-xs">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="font-heading text-4xl font-extrabold text-[#0b1c30] tracking-tight flex items-center">
+              {isLoading ? (
+                <Loader2 className="w-8 h-8 animate-spin text-[#0058be]" />
+              ) : (
+                totalConversations
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 pt-3.5 border-t border-[#e5eeff] flex items-center justify-between text-xs">
+            <Badge variant="success" size="sm" className="text-[10px]">
+              Live Database
+            </Badge>
+            <span className="text-xs text-[#0058be] font-semibold flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </Card>
+
+        {/* Card 2: New Today */}
+        <Card
+          variant="interactive"
+          onClick={() => navigate('/dashboard/conversations')}
+          className="p-6 border-[#e5eeff] hover:border-[#0058be] flex flex-col justify-between bg-white shadow-[0_2px_8px_rgba(11,28,48,0.04)] hover:shadow-[0_8px_20px_rgba(0,88,190,0.08)] transition-all cursor-pointer rounded-2xl"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#76777d]">
+                New Today
+              </span>
+              <div className="w-11 h-11 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex items-center justify-center text-[#0058be] shadow-xs">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="font-heading text-4xl font-extrabold text-[#0b1c30] tracking-tight flex items-center">
+              {isLoading ? (
+                <Loader2 className="w-8 h-8 animate-spin text-[#0058be]" />
+              ) : (
+                newTodayCount
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 pt-3.5 border-t border-[#e5eeff] flex items-center justify-between text-xs">
+            <Badge variant="accent" size="sm" className="text-[10px]">
+              Today
+            </Badge>
+            <span className="text-xs text-[#45464d] font-medium">
+              Inbound inquiries
+            </span>
+          </div>
+        </Card>
+
+        {/* Card 3: Total Messages */}
+        <Card
+          variant="interactive"
+          onClick={() => navigate('/dashboard/conversations')}
+          className="p-6 border-[#e5eeff] hover:border-[#0058be] flex flex-col justify-between bg-white shadow-[0_2px_8px_rgba(11,28,48,0.04)] hover:shadow-[0_8px_20px_rgba(0,88,190,0.08)] transition-all cursor-pointer rounded-2xl"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#76777d]">
+                Total Messages
+              </span>
+              <div className="w-11 h-11 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex items-center justify-center text-[#0058be] shadow-xs">
+                <Send className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="font-heading text-4xl font-extrabold text-[#0b1c30] tracking-tight flex items-center">
+              {isLoading ? (
+                <Loader2 className="w-8 h-8 animate-spin text-[#0058be]" />
+              ) : (
+                totalMessages
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 pt-3.5 border-t border-[#e5eeff] flex items-center justify-between text-xs">
+            <Badge variant="info" size="sm" className="text-[10px]">
+              All Threads
+            </Badge>
+            <span className="text-xs text-[#45464d] font-medium">
+              Customer & AI
+            </span>
+          </div>
+        </Card>
+      </div>
+
+      {/* 3. Quick Actions & Operations Launchpad */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-heading font-bold text-base text-[#0b1c30]">
+            Operations Launchpad
+          </h2>
+          <p className="text-xs text-[#45464d]">
+            Direct shortcuts to active tools and roadmap features
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Action 1: Live Conversations Hub (Active) */}
+          <div
+            onClick={() => navigate('/dashboard/conversations')}
+            className="p-5 rounded-2xl bg-white border border-[#dce9ff] hover:border-[#0058be] hover:shadow-md transition-all flex flex-col justify-between gap-4 cursor-pointer group"
           >
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#76777d] truncate">
-                  {st.title}
-                </span>
-                <div className="p-2 rounded-xl bg-[#eff4ff] border border-[#d8e2ff]">
-                  {st.icon}
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
+                  <MessageSquare className="w-5 h-5" />
                 </div>
+                <Badge variant="success" size="sm" className="text-[10px]">
+                  Active Engine
+                </Badge>
               </div>
+              <h3 className="font-heading font-bold text-sm text-[#0b1c30] group-hover:text-[#0058be] transition-colors">
+                Live Conversations
+              </h3>
+              <p className="text-xs text-[#45464d] mt-1 leading-relaxed">
+                Monitor incoming customer messages, trigger AI replies, or take over threads directly.
+              </p>
+            </div>
 
-              <div className="font-heading text-3xl font-extrabold text-[#0b1c30] tracking-tight">
-                {st.value}
+            <div className="pt-3 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
+              <span>Open Conversations</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* Action 2: Inbound Voice Calls (Coming Soon) */}
+          <div className="p-5 rounded-2xl bg-white/70 border border-[#e5eeff] opacity-85 flex flex-col justify-between gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#f8f9ff] text-[#76777d] flex items-center justify-center border border-[#e5eeff]">
+                  <PhoneCall className="w-5 h-5" />
+                </div>
+                <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#0058be] border-[#d8e2ff] text-[10px]">
+                  Coming Soon
+                </Badge>
+              </div>
+              <h3 className="font-heading font-bold text-sm text-[#45464d]">
+                Inbound Voice Calls
+              </h3>
+              <p className="text-xs text-[#76777d] mt-1 leading-relaxed">
+                Autonomous telephony agent that picks up phone calls, provides voice responses, and creates call briefs.
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-[#e5eeff] text-[11px] font-semibold text-[#76777d]">
+              Phase 2 Roadmap • In Active Development
+            </div>
+          </div>
+
+          {/* Action 3: CRM & Pipeline Integration (Coming Soon) */}
+          <div className="p-5 rounded-2xl bg-white/70 border border-[#e5eeff] opacity-85 flex flex-col justify-between gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#f8f9ff] text-[#76777d] flex items-center justify-center border border-[#e5eeff]">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#0058be] border-[#d8e2ff] text-[10px]">
+                  Coming Soon
+                </Badge>
+              </div>
+              <h3 className="font-heading font-bold text-sm text-[#45464d]">
+                CRM Lead Enrichment
+              </h3>
+              <p className="text-xs text-[#76777d] mt-1 leading-relaxed">
+                Automatic customer data enrichment, meeting scheduler sync, and continuous pipeline automation.
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-[#e5eeff] text-[11px] font-semibold text-[#76777d]">
+              Phase 3 Roadmap • Planned Integration
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Two-Column Row: 7-Day Inflow Bar Chart + Recent Conversations List */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column (5 cols): 100% Real 7-Day Inflow Bar Chart */}
+        <div className="lg:col-span-4">
+          <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl p-6 h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-[#eff4ff] text-[#0058be]">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-heading font-bold text-sm text-[#0b1c30]">
+                    7-Day Activity
+                  </h3>
+                </div>
+                <Badge variant="secondary" size="sm" className="text-[10px] bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
+                  Real Inflow
+                </Badge>
+              </div>
+              <p className="text-xs text-[#76777d] mb-6">
+                Daily new conversation creation over the last 7 days.
+              </p>
+
+              {/* Visual 7-day Bar Columns */}
+              <div className="flex items-end justify-between gap-2 h-36 pt-4 px-1">
+                {weeklyActivity.map((day, idx) => {
+                  const heightPercent = Math.max((day.count / maxWeeklyCount) * 100, 8);
+                  const isToday = idx === weeklyActivity.length - 1;
+
+                  return (
+                    <div key={day.dateStr} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                      <span className="text-[10px] font-mono text-[#0058be] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        {day.count}
+                      </span>
+                      <div className="w-full bg-[#f0f4fc] rounded-lg h-24 flex items-end p-0.5 overflow-hidden">
+                        <div
+                          style={{ height: `${heightPercent}%` }}
+                          className={`w-full rounded-md transition-all duration-500 ${
+                            isToday ? 'bg-[#0058be]' : 'bg-[#7ba9ff] group-hover:bg-[#0058be]'
+                          }`}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-semibold ${isToday ? 'text-[#0058be] font-bold' : 'text-[#76777d]'}`}>
+                        {day.dayName}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#e5eeff] flex items-center justify-between text-xs">
-              <Badge variant={st.badgeVariant} size="sm" className="text-[10px]">
-                {st.badge}
-              </Badge>
-              <span className="text-[11px] text-[#45464d] truncate ml-1 font-medium">
-                {st.period}
-              </span>
+            <div className="pt-4 border-t border-[#e5eeff] flex items-center justify-between text-xs text-[#45464d] mt-4">
+              <span>Today: <strong className="text-[#0b1c30]">{newTodayCount} new</strong></span>
+              <span>Total: <strong className="text-[#0058be]">{totalConversations}</strong></span>
             </div>
           </Card>
-        ))}
-      </div>
-
-      {/* 3. Real-Time Autonomous 5-Stage Pipeline Monitor */}
-      <Card variant="default" className="p-6 bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#e5eeff]">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[#eff4ff] text-[#0058be]">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="font-heading font-bold text-base text-[#0b1c30]">
-                Live 5-Stage Autonomous Progression Pipeline
-              </h2>
-              <p className="text-xs text-[#45464d]">
-                Visual progression tracking for every active customer interaction
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-mono text-[#0058be] bg-[#eff4ff] px-3 py-1.5 rounded-full border border-[#d8e2ff]">
-            <span className="w-2 h-2 rounded-full bg-[#0c9488] animate-ping" />
-            <span>Telemetry Status: Optimal</span>
-          </div>
         </div>
 
-        {/* 5-Step Visual Pipeline Stepper Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          {/* Stage 1: Ingest */}
-          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#0058be]">01. INGEST</span>
-              <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-sm text-[#0b1c30] block">
-                Omnichannel Inbound
-              </span>
-              <span className="text-[11px] text-[#45464d] block mt-0.5 leading-tight">
-                WhatsApp, SMS, Web Chat, Email Webhooks
-              </span>
-            </div>
-            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
-              12 Active Streams
-            </div>
-          </div>
-
-          {/* Stage 2: Understand */}
-          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#0058be]">02. UNDERSTAND</span>
-              <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-sm text-[#0b1c30] block">
-                AI Intent & BANT
-              </span>
-              <span className="text-[11px] text-[#45464d] block mt-0.5 leading-tight">
-                Context Extraction, 0-100 Score Evaluation
-              </span>
-            </div>
-            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
-              94.2 Avg Score
-            </div>
-          </div>
-
-          {/* Stage 3: Decide */}
-          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#0058be]">03. DECIDE</span>
-              <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-sm text-[#0b1c30] block">
-                Flow Rule Matching
-              </span>
-              <span className="text-[11px] text-[#45464d] block mt-0.5 leading-tight">
-                Enterprise Rules, SLA Triggers, Priority Routing
-              </span>
-            </div>
-            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
-              100% Policy Match
-            </div>
-          </div>
-
-          {/* Stage 4: Act */}
-          <div className="p-4 rounded-2xl bg-[#e5eeff] border border-[#0058be] flex flex-col justify-between gap-3 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#0058be]">04. ACT</span>
-              <span className="w-2 h-2 rounded-full bg-[#0058be] animate-pulse" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-sm text-[#004395] block">
-                Mutation Execution
-              </span>
-              <span className="text-[11px] text-[#45464d] block mt-0.5 leading-tight">
-                CRM Lead Sync, Calendar Booking, SOW Dispatch
-              </span>
-            </div>
-            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-bold text-[#0058be]">
-              0.4s Execution Avg
-            </div>
-          </div>
-
-          {/* Stage 5: Continue */}
-          <div className="p-4 rounded-2xl bg-[#0b1c30] text-white border border-[#131b2e] flex flex-col justify-between gap-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#89f5e7]">05. CONTINUE</span>
-              <span className="w-2 h-2 rounded-full bg-[#89f5e7]" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-sm text-white block">
-                Chained Flow
-              </span>
-              <span className="text-[11px] text-[#adc6ff] block mt-0.5 leading-tight">
-                Meeting Prep Brief, Follow-up Queue, Pipeline Advance
-              </span>
-            </div>
-            <div className="pt-2 border-t border-[#213145] text-[11px] font-bold text-[#89f5e7]">
-              Continuous Progression
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* 4. Human-in-the-Loop AI Action Approvals */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-heading font-bold text-lg text-[#0b1c30] flex items-center gap-2">
-              <span>Human-in-the-Loop Approval Queue</span>
-              <Badge variant="accent" size="sm">
-                {approvals.filter((a) => a.status === 'pending').length} Actions Requiring Review
-              </Badge>
-            </h2>
-            <p className="text-xs text-[#45464d]">
-              High-stakes commercial decisions queued for 1-click executive verification.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {approvals.map((appr) => (
-            <Card
-              key={appr.id}
-              variant="default"
-              className={`p-5 border transition-all flex flex-col justify-between ${
-                appr.status === 'approved'
-                  ? 'bg-[#e6fcf8] border-[#89f5e7]'
-                  : 'bg-white border-[#e5eeff] hover:border-[#0058be] shadow-[0_1px_3px_rgba(11,28,48,0.05)]'
-              }`}
-            >
+        {/* Right Column (8 cols): Real Recent Conversations List */}
+        <div className="lg:col-span-8">
+          <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] rounded-2xl overflow-hidden h-full flex flex-col justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f8f9ff] border-b border-[#e5eeff] p-5">
               <div>
-                <div className="flex items-center justify-between mb-3 text-xs">
-                  <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
-                    {appr.channel}
-                  </Badge>
-                  <span className="font-mono text-[11px] text-[#76777d]">{appr.time}</span>
-                </div>
-
-                <h3 className="font-heading font-bold text-sm text-[#0b1c30] mb-2 leading-snug">
-                  {appr.title}
-                </h3>
-
-                <div className="p-3 rounded-xl bg-[#f8f9ff] border border-[#e5eeff] flex flex-col gap-1.5 text-xs mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#76777d]">Account:</span>
-                    <strong className="text-[#0b1c30]">{appr.company}</strong>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#76777d]">Deal Value:</span>
-                    <span className="font-bold text-[#0058be]">{appr.amount}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#76777d]">BANT Score:</span>
-                    <span className="font-bold text-[#0c9488]">{appr.bantScore}/100</span>
-                  </div>
-                </div>
-
-                <div className="text-xs text-[#45464d] mb-4">
-                  <strong className="text-[#0b1c30] block mb-0.5">Automated Action:</strong>
-                  <span>{appr.actionText}</span>
-                </div>
+                <CardTitle className="text-base font-bold text-[#0b1c30] flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#0058be]" />
+                  <span>Recent Conversations</span>
+                </CardTitle>
+                <CardDescription className="text-xs text-[#45464d]">
+                  Latest active customer interactions synced with Supabase
+                </CardDescription>
               </div>
 
-              <div className="pt-3 border-t border-[#e5eeff]">
-                {appr.status === 'approved' ? (
-                  <div className="flex items-center justify-center gap-2 py-2 text-xs font-bold text-[#005049] bg-[#e6fcf8] rounded-xl border border-[#89f5e7]">
-                    <CheckCircle2 className="w-4 h-4 text-[#0c9488]" />
-                    <span>Action Executed Successfully</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="accent"
-                      size="sm"
-                      fullWidth
-                      onClick={() => handleApprove(appr.id)}
-                      className="text-xs font-bold shadow-[0_4px_14px_rgba(0,88,190,0.2)]"
-                    >
-                      Approve & Execute
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => showToast('Action skipped.')}
-                      className="text-xs text-[#45464d] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Live Omnichannel Activity & Telemetry Stream Table */}
-      <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f8f9ff] border-b border-[#e5eeff] pb-4">
-          <div>
-            <CardTitle className="text-base font-bold text-[#0b1c30]">
-              Real-Time Interaction & Workflow Telemetry
-            </CardTitle>
-            <CardDescription className="text-xs text-[#45464d]">
-              Live stream of conversations converted to automated business actions
-            </CardDescription>
-          </div>
-
-          {/* Channel Filters */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {['all', 'whatsapp', 'web chat', 'sms inbound', 'email inbound'].map((ch) => (
-              <button
-                key={ch}
-                onClick={() => setSelectedChannel(ch)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer whitespace-nowrap ${
-                  selectedChannel === ch
-                    ? 'bg-[#0058be] text-white shadow-xs'
-                    : 'bg-white text-[#45464d] hover:text-[#0058be] border border-[#dce9ff]'
-                }`}
-              >
-                {ch}
-              </button>
-            ))}
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#f8f9ff] border-b border-[#e5eeff] text-[#0b1c30] font-heading font-bold uppercase tracking-wider text-[10px]">
-                  <th className="py-3.5 px-6">Customer & Account</th>
-                  <th className="py-3.5 px-6">Channel</th>
-                  <th className="py-3.5 px-6">Extracted Parameters</th>
-                  <th className="py-3.5 px-6">BANT Score</th>
-                  <th className="py-3.5 px-6">Triggered Flow Rule</th>
-                  <th className="py-3.5 px-6 text-right">Telemetry Audit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e5eeff] bg-white">
-                {filteredFeed.map((row) => (
-                  <tr key={row.id} className="hover:bg-[#f8f9ff] transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-[#0b1c30] text-xs">
-                        {row.customer}
-                      </div>
-                      <div className="text-[11px] text-[#76777d] truncate mt-0.5">
-                        {row.company}
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <Badge variant="secondary" size="sm" className="text-[10px] bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
-                        {row.channel}
-                      </Badge>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <span className="font-mono text-[11px] text-[#0b1c30] bg-[#f8f9ff] px-2 py-1 rounded-md border border-[#e5eeff]">
-                        {row.extracted}
-                      </span>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <Badge variant="success" size="sm" className="text-[10px] bg-[#e6fcf8] text-[#005049] border-[#89f5e7]">
-                        {row.bantScore}/100
-                      </Badge>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-[#0058be] text-xs">
-                        {row.flowRule}
-                      </div>
-                      <div className="text-[10px] text-[#76777d] mt-0.5">
-                        {row.actionResult}
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6 text-right">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleInspect(row)}
-                        className="text-[11px] font-semibold text-[#0058be] hover:bg-[#eff4ff] border-[#d8e2ff] bg-white"
-                      >
-                        Inspect Flow
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 6. Telemetry Inspection Drawer Modal */}
-      {inspectedActivity && (
-        <Modal
-          isOpen={inspectModalOpen}
-          onClose={() => setInspectModalOpen(false)}
-          title={`Flow Telemetry Audit: ${inspectedActivity.customer}`}
-          description={`Full execution breakdown for event ${inspectedActivity.id}`}
-          maxWidth="max-w-2xl"
-        >
-          <div className="flex flex-col gap-4 font-sans text-xs">
-            <div className="p-4 rounded-xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[#76777d]">Customer Message:</span>
-                <span className="font-mono text-[10px] text-[#0058be] font-bold">{inspectedActivity.channel}</span>
-              </div>
-              <p className="text-xs sm:text-sm font-medium text-[#0b1c30] leading-relaxed">
-                "{inspectedActivity.message}"
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl border border-[#e5eeff] bg-white">
-                <span className="text-[10px] uppercase font-bold text-[#76777d] block">
-                  BANT Qualification Score
-                </span>
-                <span className="text-lg font-bold text-[#0c9488]">
-                  {inspectedActivity.bantScore} / 100
-                </span>
-              </div>
-              <div className="p-3 rounded-xl border border-[#e5eeff] bg-white">
-                <span className="text-[10px] uppercase font-bold text-[#76777d] block">
-                  Triggered Flow Policy
-                </span>
-                <span className="text-xs font-bold text-[#0058be]">
-                  {inspectedActivity.flowRule}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#0b1c30] text-white border border-[#131b2e] flex flex-col gap-2 shadow-xs">
-              <span className="text-[10px] uppercase font-bold text-[#89f5e7]">
-                Completed Backend Mutations
-              </span>
-              <div className="flex items-center gap-2 text-xs font-mono text-[#adc6ff]">
-                <CheckCircle2 className="w-4 h-4 text-[#0c9488] shrink-0" />
-                <span>{inspectedActivity.actionResult}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setInspectModalOpen(false)}
-                className="border-[#d8e2ff] text-[#45464d]"
+                onClick={() => navigate('/dashboard/conversations')}
+                className="text-xs font-semibold text-[#0058be] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
+                rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               >
-                Close Audit
+                View All
               </Button>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => {
-                  setInspectModalOpen(false);
-                  navigate('/dashboard/conversations');
-                }}
-              >
-                View in Conversations Hub
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+            </CardHeader>
+
+            <CardContent className="p-0 flex-1">
+              {isLoading ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#0058be]" />
+                  <p className="text-xs text-[#76777d]">Loading recent conversations...</p>
+                </div>
+              ) : recentConversations.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff] shadow-xs">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-sm text-[#0b1c30]">No conversations yet</h3>
+                    <p className="text-xs text-[#76777d] mt-1 max-w-sm mx-auto">
+                      When customers submit inquiries or start chats, they will automatically appear here in real time.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#e5eeff]">
+                  {recentConversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      onClick={() => navigate('/dashboard/conversations')}
+                      className="p-4 sm:px-6 hover:bg-[#f8f9ff] transition-colors flex items-center justify-between cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-[#0058be] text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <User className="w-4.5 h-4.5 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-heading font-bold text-xs sm:text-sm text-[#0b1c30] truncate group-hover:text-[#0058be] transition-colors">
+                              {conv.customer_name || 'Customer Inquiry'}
+                            </span>
+                            {conv.status && (
+                              <Badge variant="secondary" size="sm" className="text-[10px] bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
+                                {conv.status}
+                              </Badge>
+                            )}
+                          </div>
+                          {conv.customer_contact ? (
+                            <p className="text-[11px] text-[#76777d] truncate">
+                              {conv.customer_contact}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-[#76777d] truncate">
+                              Direct Web Inbound
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 text-right">
+                        <div className="flex items-center gap-1.5 text-xs text-[#76777d]">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{formatTime(conv.updated_at)}</span>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-[#76777d] group-hover:text-[#0058be] group-hover:translate-x-0.5 transition-all hidden sm:block" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/*
+      // TODO: re-enable when this feature is built
+      // 5-Stage Autonomous Pipeline Monitor section
+      <Card variant="default" className="p-6 bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)]">
+        ...
+      </Card>
+      */}
+
+      {/*
+      // TODO: re-enable when this feature is built
+      // Human-in-the-Loop AI Action Approvals Queue
+      <div className="flex flex-col gap-4">
+        ...
+      </div>
+      */}
+
+      {/*
+      // TODO: re-enable when this feature is built
+      // Live Omnichannel Activity & Telemetry Stream Table
+      <Card variant="default" className="bg-white border-[#e5eeff] shadow-[0_1px_3px_rgba(11,28,48,0.05)] overflow-hidden">
+        ...
+      </Card>
+      */}
+
+      {/*
+      // TODO: re-enable when this feature is built
+      // Telemetry Inspection Drawer Modal
+      */}
     </div>
   );
 }

@@ -12,15 +12,16 @@ import {
   Calendar,
   FileText,
   TrendingUp,
-  ShieldCheck,
-  Building2,
-  Clock,
-  Layers,
-  ChevronRight,
   LayoutDashboard,
+  PhoneCall,
+  BookOpen,
+  Layers,
+  Cpu,
 } from 'lucide-react';
 import { Button, Badge, Card } from '../components/ui';
 import { PravaahLogo } from '../components/common/PravaahLogo';
+
+// NOTE: The following components may contain simulated / forward-looking demo claims and should be reviewed separately later
 import { InteractiveFlowHero } from '../components/landing/InteractiveFlowHero';
 import { ArchitectureShowcase } from '../components/landing/ArchitectureShowcase';
 import { ComparisonSection } from '../components/landing/ComparisonSection';
@@ -30,6 +31,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [watchModalOpen, setWatchModalOpen] = useState(false);
+  const [activeNav, setActiveNav] = useState('simulator');
 
   const handleStartFlow = () => {
     navigate('/dashboard');
@@ -37,56 +39,101 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] font-sans antialiased selection:bg-[#0058be] selection:text-white">
-      {/* 1. Sticky Navigation Header */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xl border-b border-[#e5eeff] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+      {/* 1. Sticky Navigation Header (Rounded Floating Bar) */}
+      <div className="sticky top-3 sm:top-4 z-40 w-full px-4 sm:px-6 lg:px-8 pointer-events-none">
+        <header className="max-w-7xl mx-auto bg-white/95 backdrop-blur-xl border border-[#dce9ff] shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl md:rounded-full px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between pointer-events-auto transition-all">
           {/* Brand Logo with Official Star Graphic */}
-          <Link to="/" className="flex items-center gap-3 group focus:outline-none">
+          <Link to="/" className="flex items-center gap-3 group focus:outline-none shrink-0">
             <PravaahLogo size="sm" showTagline={true} />
           </Link>
 
-          {/* Center Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-7">
+          {/* Center Interactive Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-[#f8f9ff] border border-[#e5eeff]">
             <a
               href="#simulator"
-              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] transition-colors"
+              onClick={() => setActiveNav('simulator')}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                activeNav === 'simulator'
+                  ? 'bg-white text-[#0058be] font-bold shadow-xs border border-[#dce9ff]'
+                  : 'text-[#45464d] hover:text-[#0058be] hover:bg-white/60'
+              }`}
             >
-              Flow Simulator
+              <Cpu className="w-3.5 h-3.5 text-[#0058be]" />
+              <span>Simulator</span>
             </a>
+
             <a
               href="#architecture"
-              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] transition-colors"
+              onClick={() => setActiveNav('architecture')}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                activeNav === 'architecture'
+                  ? 'bg-white text-[#0058be] font-bold shadow-xs border border-[#dce9ff]'
+                  : 'text-[#45464d] hover:text-[#0058be] hover:bg-white/60'
+              }`}
             >
-              5-Stage Architecture
+              <Layers className="w-3.5 h-3.5 text-[#0058be]" />
+              <span>Architecture</span>
             </a>
+
             <a
               href="#features"
-              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] transition-colors"
+              onClick={() => setActiveNav('features')}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                activeNav === 'features'
+                  ? 'bg-white text-[#0058be] font-bold shadow-xs border border-[#dce9ff]'
+                  : 'text-[#45464d] hover:text-[#0058be] hover:bg-white/60'
+              }`}
             >
-              Operations Suite
+              <Zap className="w-3.5 h-3.5 text-[#0058be]" />
+              <span>Features</span>
             </a>
+
             <a
               href="#comparison"
-              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] transition-colors"
+              onClick={() => setActiveNav('comparison')}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                activeNav === 'comparison'
+                  ? 'bg-white text-[#0058be] font-bold shadow-xs border border-[#dce9ff]'
+                  : 'text-[#45464d] hover:text-[#0058be] hover:bg-white/60'
+              }`}
             >
-              Why Pravaah
+              <TrendingUp className="w-3.5 h-3.5 text-[#0058be]" />
+              <span>Why Pravaah</span>
             </a>
+
             <Link
-              to="/dashboard"
-              className="text-xs font-bold text-[#0058be] hover:text-[#2170e4] flex items-center gap-1.5 transition-colors"
+              to="/docs"
+              onClick={() => setActiveNav('docs')}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                activeNav === 'docs'
+                  ? 'bg-white text-[#0058be] font-bold shadow-xs border border-[#dce9ff]'
+                  : 'text-[#45464d] hover:text-[#0058be] hover:bg-white/60'
+              }`}
             >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Command Center</span>
+              <BookOpen className="w-3.5 h-3.5 text-[#0058be]" />
+              <span>Docs</span>
             </Link>
           </nav>
 
           {/* Right Action CTAs */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 shrink-0">
+            <Link to="/dashboard">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="font-bold text-xs text-[#0058be] hover:bg-[#eff4ff] rounded-full px-3.5 flex items-center gap-1.5"
+                leftIcon={<LayoutDashboard className="w-3.5 h-3.5" />}
+              >
+                Command Center
+              </Button>
+            </Link>
+            {/* Auth flow removed / commented out as per requirement
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="font-semibold text-xs text-[#0b1c30]">
+              <Button variant="ghost" size="sm" className="font-semibold text-xs text-[#0b1c30] rounded-full">
                 Sign In
               </Button>
             </Link>
+            */}
             <Button
               variant="accent"
               size="sm"
@@ -105,52 +152,68 @@ export default function Landing() {
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-        </div>
+        </header>
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-[#e5eeff] px-4 py-4 flex flex-col gap-3 shadow-lg animate-fadeIn">
+          <div className="md:hidden mt-2 bg-white border border-[#dce9ff] rounded-2xl p-4 flex flex-col gap-1.5 shadow-xl animate-fadeIn pointer-events-auto">
             <a
               href="#simulator"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-medium text-[#45464d] hover:text-[#0058be] py-1"
+              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#eff4ff]"
             >
-              Flow Simulator
+              <Cpu className="w-4 h-4 text-[#0058be]" />
+              <span>Flow Simulator</span>
             </a>
             <a
               href="#architecture"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-medium text-[#45464d] hover:text-[#0058be] py-1"
+              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#eff4ff]"
             >
-              5-Stage Architecture
+              <Layers className="w-4 h-4 text-[#0058be]" />
+              <span>Architecture</span>
             </a>
             <a
               href="#features"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-medium text-[#45464d] hover:text-[#0058be] py-1"
+              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#eff4ff]"
             >
-              Operations Suite
+              <Zap className="w-4 h-4 text-[#0058be]" />
+              <span>Features</span>
             </a>
             <a
               href="#comparison"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-medium text-[#45464d] hover:text-[#0058be] py-1"
+              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#eff4ff]"
             >
-              Comparison
+              <TrendingUp className="w-4 h-4 text-[#0058be]" />
+              <span>Why Pravaah</span>
             </a>
+            <Link
+              to="/docs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-xs font-semibold text-[#45464d] hover:text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-[#eff4ff]"
+            >
+              <BookOpen className="w-4 h-4 text-[#0058be]" />
+              <span>Documentation</span>
+            </Link>
             <Link
               to="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-semibold text-[#0058be] py-1"
+              className="text-xs font-bold text-[#0058be] flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#eff4ff]"
             >
-              Command Center
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Command Center</span>
             </Link>
-            <div className="pt-2 border-t border-[#e5eeff] flex flex-col gap-2">
+
+            <div className="pt-2 border-t border-[#e5eeff] flex flex-col gap-2 mt-1">
+              {/* Auth flow commented out
               <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="secondary" fullWidth size="sm" className="rounded-full">
                   Log In
                 </Button>
               </Link>
+              */}
               <Button
                 variant="accent"
                 fullWidth
@@ -166,7 +229,7 @@ export default function Landing() {
             </div>
           </div>
         )}
-      </header>
+      </div>
 
       {/* 2. Hero Section */}
       <section className="relative pt-10 sm:pt-14 md:pt-16 pb-16 md:pb-24 overflow-hidden bg-[#f8f9ff]">
@@ -181,23 +244,23 @@ export default function Landing() {
                 size="md"
                 className="px-3.5 py-1 text-[#004395] font-semibold border-[#d8e2ff]"
               >
-                AI-Powered B2B Business Operations Platform
+                Autonomous AI Agent & Live Conversation Hub
               </Badge>
             </div>
 
-            {/* Primary Product Message (Exact Specification) */}
+            {/* Primary Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0b1c30] leading-[1.12]">
-              Business Doesn’t Stop at Conversations.
+              Never Miss a Customer Inquiry Again.
             </h1>
 
             {/* Sub-headline / Main Value Statement */}
             <h2 className="mt-4 text-xl sm:text-2xl lg:text-3xl font-bold text-[#0b1c30] tracking-tight max-w-3xl">
-              Pravaah turns customer interactions into intelligent actions and continuous business workflows.
+              Pravaah AI engages your inbound leads, answers questions, and manages conversations automatically in real time.
             </h2>
 
             {/* Subtext */}
             <p className="mt-4 text-base sm:text-lg text-[#45464d] max-w-2xl font-normal leading-relaxed">
-              Capture leads, qualify opportunities, schedule meetings, automate follow-ups, process documents, and uncover business insights from one intelligent operations platform.
+              Provide immediate, intelligent responses to customer inquiries 24/7. Monitor live chat threads, review history, and keep complete control through your centralized business dashboard.
             </p>
 
             {/* CTAs */}
@@ -223,19 +286,16 @@ export default function Landing() {
               </Button>
             </div>
 
-            {/* Trust Points */}
+            {/* Honest Trust Points */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-[#45464d] font-medium">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> No credit card required
+                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> 24/7 Real-Time AI Responses
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> 3-Minute setup
+                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> Live Conversation Dashboard
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#0c9488]" /> Omnichannel Ready (WhatsApp, Web, SMS)
-              </span>
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#0058be]" /> SOC-2 Certified Security
+                <Sparkles className="w-4 h-4 text-[#0058be]" /> AI Voice Calls (Coming Soon)
               </span>
             </div>
           </div>
@@ -247,46 +307,91 @@ export default function Landing() {
         </div>
       </section>
 
-
-      {/* 4. 5-Stage Architecture Visualizer */}
+      {/* 4. Architecture Visualizer */}
       <div id="architecture" className="scroll-mt-20">
         <ArchitectureShowcase />
-      </div>      {/* 5. The 6 Pillars Operations Suite */}
+      </div>
+
+      {/* 5. Features Section */}
       <section id="features" className="py-20 bg-white font-sans scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <Badge variant="secondary" dot size="sm" className="mb-3 border-[#d8e2ff]">
-              Complete Operations Engine
+              Core Capabilities
             </Badge>
             <h2 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0b1c30]">
-              Everything Your Business Needs to Flow
+              Built to Handle Customer Inquiries Autonomously
             </h2>
             <p className="mt-3 text-sm sm:text-base text-[#45464d] leading-relaxed">
-              Pravaah replaces fragmented tools with an intelligent, continuous platform designed to move work forward autonomously.
+              Pravaah provides real-time conversational intelligence with human oversight, ensuring your business stays responsive around the clock.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1: Conversations & AI Agent */}
+            {/* Feature 1: Conversations & AI Agent (Real) */}
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
                   <MessageSquare className="w-5 h-5 text-[#0058be]" />
                 </div>
                 <h3 className="font-heading font-bold text-lg text-[#0b1c30] mb-2">
-                  Omnichannel Pravaah Agent
+                  Autonomous AI Conversations
                 </h3>
                 <p className="text-xs text-[#45464d] leading-relaxed">
-                  Engage inbound leads across WhatsApp, Web Chat, SMS, and Email. Pravaah listens 24/7, maintains full conversational memory, and extracts deep context.
+                  Engage inbound customer inquiries with context-aware, intelligent answers in real time. Pravaah operates 24/7 so your leads get immediate assistance without waiting.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
-                <span>Multi-channel Memory</span>
+                <span>Real-Time AI Responses</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
 
-            {/* Feature 2: Lead Qualification & BANT */}
+            {/* Feature 2: Centralized Dashboard (Real) */}
+            <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
+                  <LayoutDashboard className="w-5 h-5 text-[#0058be]" />
+                </div>
+                <h3 className="font-heading font-bold text-lg text-[#0b1c30] mb-2">
+                  Live Conversation Dashboard
+                </h3>
+                <p className="text-xs text-[#45464d] leading-relaxed">
+                  Monitor all active conversations in one unified view. Review message history, inspect customer contacts, and step in anytime with human agent replies.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
+                <span>Full Thread Visibility</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </Card>
+
+            {/* Feature 3: Voice Call Answering (In Progress / Coming Soon) */}
+            <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
+                  <PhoneCall className="w-5 h-5 text-[#0058be]" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-heading font-bold text-lg text-[#0b1c30]">
+                    AI Voice Call Support
+                  </h3>
+                  <Badge variant="secondary" size="sm">
+                    Coming Soon
+                  </Badge>
+                </div>
+                <p className="text-xs text-[#45464d] leading-relaxed">
+                  We are developing voice calling capabilities so your AI agent can answer customer phone calls, provide answers, and log call transcripts automatically.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
+                <span>In Active Development</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </Card>
+
+            {/* TODO: re-enable when this feature is built
+            // Feature 4: Lead Qualification & BANT
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
@@ -304,8 +409,10 @@ export default function Landing() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
+            */}
 
-            {/* Feature 3: Autonomous Calendar Booking */}
+            {/* TODO: re-enable when this feature is built
+            // Feature 5: Autonomous Calendar Booking
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
@@ -323,8 +430,10 @@ export default function Landing() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
+            */}
 
-            {/* Feature 4: Flow Automation Engine */}
+            {/* TODO: re-enable when this feature is built
+            // Feature 6: Flow Automation Engine
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
@@ -342,8 +451,10 @@ export default function Landing() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
+            */}
 
-            {/* Feature 5: Document Intelligence */}
+            {/* TODO: re-enable when this feature is built
+            // Feature 7: Document Intelligence Hub
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
@@ -361,8 +472,10 @@ export default function Landing() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
+            */}
 
-            {/* Feature 6: Operational Insights & Command Center */}
+            {/* TODO: re-enable when this feature is built
+            // Feature 8: Operational Command Center
             <Card variant="interactive" className="p-6 flex flex-col justify-between bg-white border-[#e5eeff] hover:border-[#0058be]">
               <div>
                 <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mb-4 border border-[#d8e2ff]">
@@ -380,6 +493,7 @@ export default function Landing() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </Card>
+            */}
           </div>
         </div>
       </section>
@@ -390,53 +504,54 @@ export default function Landing() {
       </div>
 
       {/* 7. Bottom Final Call to Action Banner */}
-      <section className="py-20 bg-[#0b1c30] text-white border-t border-[#131b2e] font-sans relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#2170e4]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="py-14 px-4 sm:px-6 lg:px-8 font-sans bg-[#f8f9ff]">
+        <div className="max-w-7xl mx-auto bg-[#0b1c30] text-white rounded-3xl border border-[#131b2e] py-16 sm:py-20 px-6 sm:px-12 relative overflow-hidden shadow-xl">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#2170e4]/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <Badge variant="accent" size="sm" className="mb-4 bg-[#131b2e] text-[#adc6ff] border-[#213145]">
-            Start Moving Work Forward Today
-          </Badge>
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <Badge variant="accent" size="sm" className="mb-4 bg-[#131b2e] text-[#adc6ff] border-[#213145]">
+              Start Managing Inquiries With AI
+            </Badge>
 
-          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-            Where Business Workflows Flow Automatically.
-          </h2>
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+              Ready to Automate Customer Conversations?
+            </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-[#adc6ff] max-w-2xl mx-auto leading-relaxed">
-            Stop letting revenue get blocked by slow manual steps. Deploy Pravaah and convert customer interactions into completed business actions 24/7.
-          </p>
+            <p className="mt-4 text-base sm:text-lg text-[#adc6ff] max-w-2xl mx-auto leading-relaxed">
+              Deploy Pravaah AI to handle incoming customer messages immediately and manage all interactions from a single command center.
+            </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              variant="accent"
-              size="lg"
-              onClick={handleStartFlow}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full text-base font-bold bg-[#0058be] hover:bg-[#2170e4] text-white shadow-[0_4px_14px_rgba(0,88,190,0.35)]"
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Start Your Flow
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setWatchModalOpen(true)}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-full text-base text-white border-[#213145] hover:bg-[#131b2e] hover:text-white"
-              leftIcon={<Play className="w-4 h-4 text-[#2170e4]" />}
-            >
-              Watch Pravaah in Action
-            </Button>
-          </div>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                variant="accent"
+                size="lg"
+                onClick={handleStartFlow}
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full text-base font-bold bg-[#0058be] hover:bg-[#2170e4] text-white shadow-[0_4px_14px_rgba(0,88,190,0.35)]"
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                Start Your Flow
+              </Button>
+              <button
+                type="button"
+                onClick={() => setWatchModalOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full text-base font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 transition-all duration-200 active:scale-[0.98] cursor-pointer backdrop-blur-xs shadow-xs"
+              >
+                <Play className="w-4 h-4 text-[#89f5e7]" />
+                <span>Watch Pravaah in Action</span>
+              </button>
+            </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-[#adc6ff]">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> Free 14-Day Full Access
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> Zero Integration Friction
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> Cancel Anytime
-            </span>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-[#adc6ff]">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> 24/7 Real-Time Responses
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> Live Conversation Dashboard
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#89f5e7]" /> Complete Oversight & Control
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -444,18 +559,14 @@ export default function Landing() {
       {/* 8. Global Footer */}
       <footer className="py-12 bg-white border-t border-[#e5eeff] text-xs text-[#45464d] font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-2 flex flex-col gap-3">
               <Link to="/" className="flex items-center">
                 <PravaahLogo size="sm" showTagline={true} />
               </Link>
               <p className="text-xs text-[#45464d] max-w-sm leading-relaxed mt-1">
-                The AI-powered B2B business operations platform that converts customer conversations into intelligent actions and continuous workflows.
+                The AI agent platform that responds to customer inquiries in real time and provides centralized conversation management for modern businesses.
               </p>
-              <div className="flex items-center gap-2 mt-1 text-[11px] text-[#76777d]">
-                <ShieldCheck className="w-4 h-4 text-[#0058be]" />
-                <span>SOC-2 Certified & GDPR Compliant</span>
-              </div>
             </div>
 
             <div>
@@ -469,8 +580,13 @@ export default function Landing() {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/docs" className="hover:text-[#0058be] transition-colors">
+                    Documentation
+                  </Link>
+                </li>
+                <li>
                   <Link to="/dashboard/conversations" className="hover:text-[#0058be] transition-colors">
-                    Conversations
+                    Live Conversations
                   </Link>
                 </li>
                 <li>
@@ -480,7 +596,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <a href="#architecture" className="hover:text-[#0058be] transition-colors">
-                    5-Stage Architecture
+                    Architecture
                   </a>
                 </li>
               </ul>
@@ -488,55 +604,22 @@ export default function Landing() {
 
             <div>
               <span className="font-bold text-[#0b1c30] block mb-3 text-xs uppercase tracking-wider">
-                Platform
+                Quick Access
               </span>
               <ul className="flex flex-col gap-2">
                 <li>
                   <Link to="/dashboard" className="hover:text-[#0058be] transition-colors">
-                    Lead Radar
+                    Command Center
                   </Link>
                 </li>
                 <li>
-                  <Link to="/dashboard" className="hover:text-[#0058be] transition-colors">
-                    Meeting Scheduler
+                  <Link to="/dashboard/conversations" className="hover:text-[#0058be] transition-colors">
+                    Conversations Hub
                   </Link>
                 </li>
                 <li>
-                  <Link to="/dashboard" className="hover:text-[#0058be] transition-colors">
-                    Flow Rules Builder
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/dashboard" className="hover:text-[#0058be] transition-colors">
-                    Document Hub
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <span className="font-bold text-[#0b1c30] block mb-3 text-xs uppercase tracking-wider">
-                Company & Trust
-              </span>
-              <ul className="flex flex-col gap-2">
-                <li>
-                  <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                    Enterprise Security
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                    System Status (100%)
+                  <Link to="/docs" className="hover:text-[#0058be] transition-colors">
+                    Docs & Guides
                   </Link>
                 </li>
               </ul>
@@ -545,17 +628,14 @@ export default function Landing() {
 
           <div className="pt-8 border-t border-[#e5eeff] flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-500 text-[11px]">
             <div className="flex items-center gap-2">
-              <span>© {new Date().getFullYear()} Pravaah Technologies Inc. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} Pravaah. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6">
-              <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                Privacy
+              <Link to="/docs" className="hover:text-[#0058be] transition-colors">
+                Documentation
               </Link>
-              <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                Terms
-              </Link>
-              <Link to="/login" className="hover:text-[#0058be] transition-colors">
-                Security
+              <Link to="/dashboard" className="hover:text-[#0058be] transition-colors">
+                Command Center
               </Link>
             </div>
           </div>
@@ -571,3 +651,4 @@ export default function Landing() {
     </div>
   );
 }
+

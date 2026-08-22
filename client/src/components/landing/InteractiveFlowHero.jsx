@@ -13,13 +13,16 @@ import {
   AlertTriangle,
   RotateCcw,
   CheckCheck,
+  Briefcase,
+  ShieldAlert,
 } from 'lucide-react';
 import { Badge, Button } from '../ui';
 
 const PRESET_SCENARIOS = [
   {
     id: 'enterprise',
-    label: '💼 Enterprise Inbound ($30k)',
+    label: 'Enterprise Inbound ($30k)',
+    icon: Briefcase,
     prompt:
       'Hi! We are looking for a 50-seat enterprise plan for Apex Health by next month. Our budget is around $30,000. Can we book a demo for this Thursday at 2 PM?',
     channel: 'Web Chat',
@@ -42,7 +45,8 @@ const PRESET_SCENARIOS = [
   },
   {
     id: 'sla',
-    label: '🚨 Urgent SLA Escalation',
+    label: 'Urgent SLA Escalation',
+    icon: ShieldAlert,
     prompt:
       'Emergency: Our production payment webhook is returning 500 errors on Account #A-992. We are losing checkout transactions right now!',
     channel: 'WhatsApp',
@@ -63,7 +67,8 @@ const PRESET_SCENARIOS = [
   },
   {
     id: 'contract',
-    label: '📄 Contract Document Processing',
+    label: 'Contract Document Processing',
+    icon: FileText,
     prompt:
       'Hi Pravaah, please find our signed Master Services Agreement (MSA) attached for the Q3 expansion ($45,000 value). Let us know when onboarding starts.',
     channel: 'Email',
@@ -102,7 +107,7 @@ export function InteractiveFlowHero({ onExplorePlatform }) {
     setTimeout(() => {
       setCurrentStep(5);
       setIsSimulating(false);
-    }, 2900);
+    }, 2800);
   };
 
   const handleSelectScenario = (sc) => {
@@ -159,19 +164,30 @@ export function InteractiveFlowHero({ onExplorePlatform }) {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-            {PRESET_SCENARIOS.map((sc) => (
-              <button
-                key={sc.id}
-                onClick={() => handleSelectScenario(sc)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                  selectedScenario.id === sc.id
-                    ? 'bg-[#0058be] text-white font-semibold shadow-xs'
-                    : 'bg-white text-[#45464d] hover:text-[#0058be] hover:bg-[#eff4ff] border border-[#dce9ff]'
-                }`}
-              >
-                {sc.label}
-              </button>
-            ))}
+            {PRESET_SCENARIOS.map((sc) => {
+              const IconComp = sc.icon;
+              const isSelected = selectedScenario.id === sc.id;
+              return (
+                <button
+                  key={sc.id}
+                  onClick={() => handleSelectScenario(sc)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[#0058be] text-white font-semibold shadow-xs'
+                      : 'bg-white text-[#45464d] hover:text-[#0058be] hover:bg-[#eff4ff] border border-[#dce9ff]'
+                  }`}
+                >
+                  {IconComp && (
+                    <IconComp
+                      className={`w-3.5 h-3.5 ${
+                        isSelected ? 'text-white' : 'text-[#0058be]'
+                      }`}
+                    />
+                  )}
+                  <span>{sc.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

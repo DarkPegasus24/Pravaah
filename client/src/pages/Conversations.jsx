@@ -2,305 +2,205 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   Send,
-  Sparkles,
-  Bot,
-  Smartphone,
-  Globe,
-  MessageSquare,
-  Calendar,
-  Paperclip,
-  CheckCheck,
-  Building2,
-  Zap,
-  ArrowLeft,
-  ShieldCheck,
-  CheckCircle2,
-  ChevronRight,
   User,
-  Clock,
-  Layers,
+  MessageSquare,
+  ArrowLeft,
   Loader2,
   AlertCircle,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { Button, Input, Card, Badge } from '../components/ui';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Conversations() {
-  // Pre-loaded realistic enterprise threads matching DESIGN.md with Supabase sync
-  const [conversations, setConversations] = useState([
-    {
-      id: 'conv-1',
-      name: 'Sarah Jenkins',
-      company: 'Apex Dental Group',
-      channel: 'WhatsApp',
-      channelType: 'whatsapp',
-      status: 'Qualified',
-      statusVariant: 'success',
-      intentScore: 94,
-      unreadCount: 1,
-      autopilotEnabled: true,
-      bant: {
-        budget: '$30,000 - $45,000 ARR',
-        authority: 'Owner / Principal Decision Maker',
-        need: 'Automated 50-Seat Patient Inbound Workflow',
-        timeline: 'Next Month (Q3 Launch)',
-        score: 94,
-      },
-      flowRuleMatched: 'Enterprise Inbound Flow ($30k+)',
-      nextChainedAction: 'Dispatch SOW #SOW-412 & Schedule Onboarding',
-      messages: [
-        {
-          id: 'm-1',
-          sender: 'customer',
-          senderName: 'Sarah Jenkins',
-          text: 'Hi! We operate 6 dental clinics and need an autonomous system for patient inquiries and scheduling. Our budget is around $30,000 - $45,000 ARR.',
-          timestamp: '10:14 AM',
-        },
-        {
-          id: 'm-2',
-          sender: 'ai',
-          senderName: 'PRAVAAH Autopilot',
-          text: 'Hello Sarah! Welcome to Pravaah. We can easily automate intake and multi-calendar scheduling across your 6 clinic locations. Would Thursday at 2:00 PM EST work for an executive architecture demo?',
-          timestamp: '10:15 AM',
-        },
-        {
-          id: 'm-3',
-          sender: 'customer',
-          senderName: 'Sarah Jenkins',
-          text: 'Thursday at 2:00 PM EST is perfect. Please send the invite to sarah@apexdental.com.',
-          timestamp: '10:16 AM',
-        },
-        {
-          id: 'm-4',
-          sender: 'ai',
-          senderName: 'PRAVAAH Autopilot',
-          text: '✅ Calendar invite dispatched and confirmed for Thursday, Oct 24 @ 2:00 PM EST. Lead #412 created and qualified in CRM with a 94/100 BANT score.',
-          timestamp: '10:16 AM',
-        },
-      ],
-    },
-    {
-      id: 'conv-2',
-      name: 'Dr. Michael Chang',
-      company: 'Nexus Global Health',
-      channel: 'Web Chat',
-      channelType: 'web',
-      status: 'Meeting Booked',
-      statusVariant: 'accent',
-      intentScore: 89,
-      unreadCount: 0,
-      autopilotEnabled: true,
-      bant: {
-        budget: '$18,500 ARR',
-        authority: 'Chief of Medicine',
-        need: 'Conflict-Free Telehealth Booking',
-        timeline: 'Immediate',
-        score: 89,
-      },
-      flowRuleMatched: 'Calendar Slot Optimizer Rule',
-      nextChainedAction: 'Sync with Dr. Chang Calendar & Send Prep Brief',
-      messages: [
-        {
-          id: 'm-21',
-          sender: 'customer',
-          senderName: 'Dr. Michael Chang',
-          text: 'Could we reschedule our onboarding review to Friday morning at 10:30 AM?',
-          timestamp: 'Yesterday',
-        },
-        {
-          id: 'm-22',
-          sender: 'ai',
-          senderName: 'PRAVAAH Autopilot',
-          text: 'Checking team calendar availability... Friday @ 10:30 AM EST is completely clear! Calendar invite has been updated.',
-          timestamp: 'Yesterday',
-        },
-      ],
-    },
-    {
-      id: 'conv-3',
-      name: 'David Ross',
-      company: 'Quantum Health Care',
-      channel: 'SMS Inbound',
-      channelType: 'sms',
-      status: 'Qualified',
-      statusVariant: 'success',
-      intentScore: 98,
-      unreadCount: 0,
-      autopilotEnabled: false,
-      bant: {
-        budget: '$60,000 ARR',
-        authority: 'VP Operations',
-        need: 'Urgent Clinic Expansion (25 Provider Seats)',
-        timeline: 'This Week',
-        score: 98,
-      },
-      flowRuleMatched: 'Urgent SLA Escalation (< 15 min)',
-      nextChainedAction: 'Alert Executive On-Call & Lock Priority Slot',
-      messages: [
-        {
-          id: 'm-31',
-          sender: 'customer',
-          senderName: 'David Ross',
-          text: 'Urgent: Clinic expansion requires 25 additional provider seats by this Friday. Please connect us with an AE.',
-          timestamp: '2 hours ago',
-        },
-      ],
-    },
-  ]);
-
-  const [selectedId, setSelectedId] = useState('conv-1');
+  const [conversations, setConversations] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [inputMessage, setInputMessage] = useState('');
   const [mobileChatView, setMobileChatView] = useState(false);
-  const [showReasoningDrawer, setShowReasoningDrawer] = useState(true);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const chatEndRef = useRef(null);
 
-  // Optional Supabase dynamic sync
-  useEffect(() => {
-    async function fetchSupabaseData() {
-      try {
-        const { data, error } = await supabase
-          .from('conversations')
-          .select('*')
-          .order('created_at', { ascending: false });
+  // 1. Fetch conversations from Supabase on mount
+  const fetchConversations = async () => {
+    try {
+      setIsLoadingConversations(true);
+      setErrorMessage(null);
 
-        if (!error && data && data.length > 0) {
-          setConversations(data);
-          setSelectedId(data[0]?.id || 'conv-1');
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setConversations(data);
+        if (data.length > 0) {
+          setSelectedId((prev) => (prev && data.some((c) => c.id === prev) ? prev : data[0].id));
+        } else {
+          setSelectedId(null);
         }
-      } catch (err) {
-        // Fallback gracefully to default rich data
       }
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setErrorMessage(err.message || 'Failed to load conversations from Supabase.');
+    } finally {
+      setIsLoadingConversations(false);
     }
-    fetchSupabaseData();
+  };
+
+  useEffect(() => {
+    fetchConversations();
   }, []);
 
-  const activeConversation =
-    conversations.find((c) => c.id === selectedId) || conversations[0];
+  // 2. Fetch messages for the selected conversation
+  const fetchMessages = async (convId) => {
+    if (!convId) {
+      setMessages([]);
+      return;
+    }
+
+    try {
+      setIsLoadingMessages(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', convId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setMessages(data);
+      }
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
 
   useEffect(() => {
-    if (activeConversation?.messages) {
+    if (selectedId) {
+      fetchMessages(selectedId);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedId]);
+
+  // 3. Realtime subscription to messages for the selected conversation
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const channel = supabase
+      .channel(`realtime:messages:${selectedId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${selectedId}`,
+        },
+        (payload) => {
+          if (payload?.new) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedId]);
+
+  // Auto-scroll chat to bottom when messages update
+  useEffect(() => {
+    if (messages.length > 0) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [activeConversation?.messages]);
+  }, [messages]);
+
+  const activeConversation = conversations.find((c) => c.id === selectedId) || null;
 
   const handleSelectConversation = (id) => {
     setSelectedId(id);
     setMobileChatView(true);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
-    );
   };
 
+  // 4. Send Message via deployed "ai-agent" Edge Function
   const handleSendMessage = async (e) => {
     e?.preventDefault();
-    if (!inputMessage.trim() || !activeConversation) return;
+    if (!inputMessage.trim() || !selectedId || isSending) return;
 
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'agent',
-      senderName: 'Operations Admin',
-      text: inputMessage.trim(),
-      timestamp: 'Just now',
-    };
-
+    const textToSend = inputMessage.trim();
+    setInputMessage('');
     setIsSending(true);
 
-    // Update local state immediately for snappy response
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === activeConversation.id) {
-          return {
-            ...c,
-            messages: [...(c.messages || []), newMessage],
-          };
-        }
-        return c;
-      })
-    );
-
-    // Optional Supabase insertion
     try {
-      await supabase.from('messages').insert([
-        {
-          conversation_id: activeConversation.id,
-          sender_type: 'agent',
-          content: inputMessage.trim(),
+      const { error } = await supabase.functions.invoke('ai-agent', {
+        body: {
+          conversation_id: selectedId,
+          customer_message: textToSend,
         },
-      ]);
+      });
+
+      if (error) {
+        console.error('Edge Function error:', error);
+      }
+
+      // Refetch messages to ensure accurate DB state
+      await fetchMessages(selectedId);
+      // Refresh conversations list to update updated_at timestamp order
+      await fetchConversations();
     } catch (err) {
-      // Ignored for local demo fallback
+      console.error('Error invoking ai-agent edge function:', err);
+    } finally {
+      setIsSending(false);
     }
-
-    setInputMessage('');
-    setIsSending(false);
   };
 
-  const handleSendQuickReply = (text) => {
-    if (!activeConversation) return;
-
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'ai',
-      senderName: 'PRAVAAH Autopilot',
-      text: text,
-      timestamp: 'Just now',
-    };
-
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === activeConversation.id) {
-          return {
-            ...c,
-            messages: [...(c.messages || []), newMessage],
-          };
-        }
-        return c;
-      })
-    );
+  const formatTime = (timestamp) => {
+    if (!timestamp) return 'Just now';
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return timestamp;
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
-  const toggleAutopilot = () => {
-    if (!activeConversation) return;
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === activeConversation.id
-          ? { ...c, autopilotEnabled: !c.autopilotEnabled }
-          : c
-      )
-    );
-  };
-
+  // Filter conversations
   const filteredConversations = conversations.filter((c) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.messages?.some((m) =>
-        m.text?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      !searchQuery ||
+      c.customer_name?.toLowerCase().includes(query) ||
+      c.customer_contact?.toLowerCase().includes(query) ||
+      c.status?.toLowerCase().includes(query);
 
-    if (filterStatus === 'all') return matchesSearch;
-    if (filterStatus === 'unread') return matchesSearch && c.unreadCount > 0;
-    if (filterStatus === 'booked') return matchesSearch && c.status === 'Meeting Booked';
-    if (filterStatus === 'qualified') return matchesSearch && c.status === 'Qualified';
-    return matchesSearch;
+    if (!matchesSearch) return false;
+
+    if (filterStatus === 'all') return true;
+    if (filterStatus === 'booked') return c.status?.toLowerCase().includes('book');
+    if (filterStatus === 'qualified') return c.status?.toLowerCase().includes('qualif');
+    if (filterStatus === 'open') return c.status?.toLowerCase().includes('open');
+    return true;
   });
-
-  const getChannelIcon = (type) => {
-    switch (type) {
-      case 'whatsapp':
-        return <Smartphone className="w-3.5 h-3.5 text-[#0c9488]" />;
-      case 'web':
-        return <Globe className="w-3.5 h-3.5 text-[#0058be]" />;
-      case 'sms':
-        return <MessageSquare className="w-3.5 h-3.5 text-[#76777d]" />;
-      default:
-        return <Globe className="w-3.5 h-3.5 text-[#0058be]" />;
-    }
-  };
 
   return (
     <div className="h-[calc(100vh-9rem)] md:h-[calc(100vh-8.5rem)] min-h-[560px] flex flex-col gap-4 animate-fadeIn font-sans bg-[#f8f9ff] text-[#0b1c30]">
@@ -310,31 +210,19 @@ export default function Conversations() {
           <h1 className="font-heading text-2xl font-extrabold text-[#0b1c30] tracking-tight flex items-center gap-2.5">
             <span>Conversations Hub</span>
             <Badge variant="accent" size="sm">
-              {conversations.length} Active Threads
+              {conversations.length} Active {conversations.length === 1 ? 'Thread' : 'Threads'}
             </Badge>
           </h1>
           <p className="text-xs text-[#45464d]">
-            Omnichannel customer inquiries autonomously moved to CRM pipeline and calendar actions.
+            Real-time customer inquiries connected to Supabase and autonomous AI agent responses.
           </p>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowReasoningDrawer(!showReasoningDrawer)}
-            className="text-xs font-semibold text-[#0058be] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
-            leftIcon={<Layers className="w-3.5 h-3.5" />}
-          >
-            {showReasoningDrawer ? 'Hide AI Inspector' : 'Show AI Inspector'}
-          </Button>
         </div>
       </div>
 
-      {/* Main Multi-Panel Container */}
+      {/* Main Dual-Panel Container */}
       <Card
         variant="default"
-        className="flex-1 min-h-0 border-[#e5eeff] overflow-hidden flex flex-col md:flex-row shadow-[0_1px_3px_rgba(11,28,48,0.05)] bg-white"
+        className="flex-1 min-h-0 border-[#e5eeff] overflow-hidden flex flex-col md:flex-row shadow-[0_1px_3px_rgba(11,28,48,0.05)] bg-white rounded-2xl"
       >
         {/* ================= LEFT PANEL: CONVERSATIONS LIST ================= */}
         <div
@@ -342,10 +230,10 @@ export default function Conversations() {
             mobileChatView ? 'hidden md:flex' : 'flex'
           }`}
         >
-          {/* Search and Filters */}
+          {/* Search and Status Filter Pills */}
           <div className="p-3.5 border-b border-[#e5eeff] flex flex-col gap-2.5 bg-[#f8f9ff]">
             <Input
-              placeholder="Search leads, companies..."
+              placeholder="Search customer, contact..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="sm"
@@ -355,17 +243,22 @@ export default function Conversations() {
 
             {/* Filter Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              {['all', 'booked', 'qualified', 'unread'].map((st) => (
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'open', label: 'Open' },
+                { id: 'qualified', label: 'Qualified' },
+                { id: 'booked', label: 'Booked' },
+              ].map((st) => (
                 <button
-                  key={st}
-                  onClick={() => setFilterStatus(st)}
+                  key={st.id}
+                  onClick={() => setFilterStatus(st.id)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all cursor-pointer whitespace-nowrap ${
-                    filterStatus === st
+                    filterStatus === st.id
                       ? 'bg-[#0058be] text-white shadow-xs'
                       : 'bg-white text-[#45464d] hover:text-[#0058be] border border-[#dce9ff]'
                   }`}
                 >
-                  {st}
+                  {st.label}
                 </button>
               ))}
             </div>
@@ -373,71 +266,85 @@ export default function Conversations() {
 
           {/* Scrollable Conversation List */}
           <div className="flex-1 overflow-y-auto divide-y divide-[#e5eeff] flex flex-col">
-            {filteredConversations.map((conv) => {
-              const isSelected = conv.id === activeConversation?.id;
-              const lastMsg = conv.messages?.[conv.messages.length - 1];
+            {isLoadingConversations ? (
+              <div className="p-10 text-center flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-[#0058be]" />
+                <p className="text-xs text-[#76777d]">Loading conversations...</p>
+              </div>
+            ) : errorMessage ? (
+              <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
+                <AlertCircle className="w-6 h-6 text-red-500" />
+                <p className="text-xs text-red-600 font-medium">{errorMessage}</p>
+                <Button variant="secondary" size="sm" onClick={fetchConversations} className="mt-2 text-xs">
+                  Retry
+                </Button>
+              </div>
+            ) : filteredConversations.length === 0 ? (
+              <div className="p-10 text-center flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-sm text-[#0b1c30]">No conversations found</h3>
+                  <p className="text-xs text-[#76777d] mt-1">
+                    {searchQuery ? 'Try matching a different name or contact.' : 'Inbound inquiries will appear here.'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              filteredConversations.map((conv) => {
+                const isSelected = conv.id === selectedId;
 
-              return (
-                <div
-                  key={conv.id}
-                  onClick={() => handleSelectConversation(conv.id)}
-                  className={`p-4 transition-all cursor-pointer flex items-start gap-3 relative ${
-                    isSelected
-                      ? 'bg-[#eff4ff] border-l-4 border-[#0058be]'
-                      : 'hover:bg-[#f8f9ff]'
-                  }`}
-                >
-                  {/* Avatar */}
+                return (
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-xs transition-colors ${
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv.id)}
+                    className={`p-4 transition-all cursor-pointer flex items-start gap-3 relative ${
                       isSelected
-                        ? 'bg-[#0058be] text-white'
-                        : 'bg-[#eff4ff] text-[#004395] border border-[#d8e2ff]'
+                        ? 'bg-[#eff4ff] border-l-4 border-[#0058be]'
+                        : 'hover:bg-[#f8f9ff]'
                     }`}
                   >
-                    {conv.name.slice(0, 2).toUpperCase()}
+                    {/* User Avatar */}
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition-colors ${
+                        isSelected
+                          ? 'bg-[#0058be] text-white'
+                          : 'bg-[#eff4ff] text-[#004395] border border-[#d8e2ff]'
+                      }`}
+                    >
+                      <User className="w-4.5 h-4.5" />
+                    </div>
+
+                    {/* Content Preview */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className="font-heading font-bold text-xs text-[#0b1c30] truncate">
+                          {conv.customer_name || 'Customer Inquiry'}
+                        </span>
+                        <span className="text-[10px] text-[#76777d] font-mono shrink-0">
+                          {formatTime(conv.updated_at || conv.created_at)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#76777d] mb-1">
+                        <span className="truncate">
+                          {conv.customer_contact || 'Inbound Web Thread'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2">
+                        {conv.status && (
+                          <Badge variant="secondary" size="sm" className="text-[9px] bg-white border-[#d8e2ff] text-[#004395]">
+                            {conv.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Content Preview */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className="font-heading font-bold text-xs text-[#0b1c30] truncate">
-                        {conv.name}
-                      </span>
-                      <span className="text-[10px] text-[#76777d] font-mono shrink-0">
-                        {lastMsg?.timestamp || 'Recent'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#76777d] mb-1">
-                      <span className="truncate">{conv.company}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        {getChannelIcon(conv.channelType)}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-[#45464d] truncate leading-snug">
-                      {lastMsg?.text || 'No messages yet'}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-2">
-                      <Badge variant={conv.statusVariant || 'secondary'} size="sm" className="text-[9px]">
-                        {conv.status}
-                      </Badge>
-
-                      <span className="text-[10px] font-mono text-[#0c9488] font-bold">
-                        {conv.intentScore}% BANT
-                      </span>
-                    </div>
-                  </div>
-
-                  {conv.unreadCount > 0 && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#0058be] absolute right-3 top-4 shadow-sm" />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -455,153 +362,116 @@ export default function Conversations() {
                   <button
                     onClick={() => setMobileChatView(false)}
                     className="md:hidden p-1.5 rounded-lg bg-white border border-[#dce9ff] text-[#45464d] hover:text-[#0b1c30]"
+                    aria-label="Back to conversation list"
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
 
-                  <div className="w-9 h-9 rounded-xl bg-[#0b1c30] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                    {activeConversation.name.slice(0, 2).toUpperCase()}
+                  <div className="w-9 h-9 rounded-xl bg-[#0058be] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <User className="w-4.5 h-4.5 text-white" />
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <h2 className="font-heading font-bold text-sm text-[#0b1c30] truncate">
-                        {activeConversation.name}
+                        {activeConversation.customer_name || 'Customer Inquiry'}
                       </h2>
-                      <Badge variant={activeConversation.statusVariant || 'secondary'} size="sm">
-                        {activeConversation.status}
-                      </Badge>
+                      {activeConversation.status && (
+                        <Badge variant="secondary" size="sm" className="text-[10px] bg-white border-[#d8e2ff] text-[#004395]">
+                          {activeConversation.status}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-[#76777d] truncate">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-[#0058be]" />
-                        {activeConversation.company}
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        {getChannelIcon(activeConversation.channelType)}
-                        {activeConversation.channel}
-                      </span>
-                    </div>
+                    {activeConversation.customer_contact && (
+                      <p className="text-[11px] text-[#76777d] truncate">
+                        {activeConversation.customer_contact}
+                      </p>
+                    )}
                   </div>
-                </div>
-
-                {/* Right Toggle: Autopilot */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={toggleAutopilot}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      activeConversation.autopilotEnabled
-                        ? 'bg-[#e6fcf8] border-[#89f5e7] text-[#005049]'
-                        : 'bg-white border-[#dce9ff] text-[#45464d] hover:text-[#0b1c30]'
-                    }`}
-                  >
-                    <Zap
-                      className={`w-3.5 h-3.5 ${
-                        activeConversation.autopilotEnabled
-                          ? 'text-[#0c9488] animate-pulse'
-                          : 'text-[#76777d]'
-                      }`}
-                    />
-                    <span>
-                      {activeConversation.autopilotEnabled
-                        ? 'Autopilot: Active'
-                        : 'Manual Agent'}
-                    </span>
-                  </button>
                 </div>
               </div>
 
               {/* Message History Feed */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-[#f8f9ff]/40">
-                {activeConversation.messages?.map((msg) => {
-                  const isAi = msg.sender === 'ai' || msg.sender_type === 'ai';
-                  const isAgent = msg.sender === 'agent' || msg.sender_type === 'agent';
-                  const isCustomer = msg.sender === 'customer' || msg.sender_type === 'customer';
+                {isLoadingMessages ? (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#0058be]" />
+                    <p className="text-xs text-[#76777d]">Loading messages...</p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
+                      <MessageSquare className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-bold text-sm text-[#0b1c30]">No messages in this thread yet</h3>
+                      <p className="text-xs text-[#76777d] mt-1">
+                        Send a message below to test the AI agent response.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isBusiness = msg.sender_type === 'business';
 
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${
-                        isCustomer ? 'self-start items-start' : 'self-end items-end'
-                      }`}
-                    >
-                      {/* Sender Label */}
-                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-[#76777d]">
-                        {isAi && <Sparkles className="w-3 h-3 text-[#0058be]" />}
-                        <span className="font-semibold text-[#0b1c30]">
-                          {msg.senderName || (isCustomer ? activeConversation.name : 'PRAVAAH')}
-                        </span>
-                        <span>•</span>
-                        <span className="font-mono text-[10px]">{msg.timestamp || 'Now'}</span>
-                      </div>
-
-                      {/* Bubble */}
+                    return (
                       <div
-                        className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                          isAi
-                            ? 'bg-[#0b1c30] text-white border border-[#131b2e] shadow-sm'
-                            : isAgent
-                            ? 'bg-[#0058be] text-white shadow-xs'
-                            : 'bg-white text-[#0b1c30] border border-[#e5eeff] shadow-xs'
+                        key={msg.id}
+                        className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${
+                          isBusiness ? 'self-end flex-row-reverse' : 'self-start'
                         }`}
                       >
-                        {msg.text || msg.content}
+                        {/* Avatar */}
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
+                            isBusiness
+                              ? 'bg-[#0058be] text-white shadow-xs'
+                              : 'bg-white border border-[#dce9ff] text-[#0058be]'
+                          }`}
+                        >
+                          {isBusiness ? <Sparkles className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                        </div>
+
+                        {/* Bubble */}
+                        <div className="flex flex-col gap-1">
+                          <div
+                            className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                              isBusiness
+                                ? 'bg-[#0058be] text-white rounded-tr-xs shadow-xs'
+                                : 'bg-white text-[#0b1c30] border border-[#e5eeff] rounded-tl-xs shadow-xs'
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap">{msg.content || msg.text}</p>
+                          </div>
+
+                          <span
+                            className={`text-[10px] text-[#76777d] font-mono flex items-center gap-1 ${
+                              isBusiness ? 'justify-end' : 'justify-start'
+                            }`}
+                          >
+                            <Clock className="w-2.5 h-2.5" />
+                            {formatTime(msg.created_at)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
                 <div ref={chatEndRef} />
               </div>
 
-              {/* AI Quick Suggestion Chips */}
-              <div className="px-4 py-2 bg-white border-t border-[#e5eeff] flex items-center gap-2 overflow-x-auto text-xs">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#76777d] flex items-center gap-1 shrink-0">
-                  <Sparkles className="w-3 h-3 text-[#0058be]" />
-                  AI Suggested:
-                </span>
-                <button
-                  onClick={() =>
-                    handleSendQuickReply(
-                      'I have reserved Thursday @ 2 PM EST for your team. Here is your calendar link: https://meet.pravaah.ai/demo-412'
-                    )
-                  }
-                  className="px-2.5 py-1 rounded-lg bg-[#eff4ff] text-[#004395] hover:bg-[#d8e2ff] font-semibold transition-colors shrink-0 text-xs border border-[#d8e2ff]"
-                >
-                  📅 Send Demo Link
-                </button>
-                <button
-                  onClick={() =>
-                    handleSendQuickReply(
-                      'I have generated your customized 50-seat Enterprise SLA proposal. Check your inbox for SOW-412.'
-                    )
-                  }
-                  className="px-2.5 py-1 rounded-lg bg-[#eff4ff] text-[#004395] hover:bg-[#d8e2ff] font-semibold transition-colors shrink-0 text-xs border border-[#d8e2ff]"
-                >
-                  📄 Dispatch SOW Agreement
-                </button>
-              </div>
-
-              {/* Message Input Box */}
+              {/* Message Input Bar */}
               <form
                 onSubmit={handleSendMessage}
-                className="p-3 bg-white border-t border-[#e5eeff] flex items-center gap-2"
+                className="p-3 sm:p-4 border-t border-[#e5eeff] bg-white flex items-center gap-2 shrink-0"
               >
-                <button
-                  type="button"
-                  className="p-2 rounded-xl text-[#76777d] hover:text-[#0058be] hover:bg-[#eff4ff] transition-colors"
-                  title="Attach file"
-                >
-                  <Paperclip className="w-4 h-4" />
-                </button>
-
                 <input
                   type="text"
-                  placeholder="Type a message or trigger a flow action..."
+                  placeholder="Type a customer message to trigger the AI agent..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   disabled={isSending}
-                  className="flex-1 bg-[#f8f9ff] border border-[#dce9ff] rounded-xl px-3.5 py-2 text-xs text-[#0b1c30] placeholder-[#76777d] focus:outline-none focus:border-[#0058be] focus:ring-1 focus:ring-[#0058be]"
+                  className="flex-1 bg-[#f8f9ff] border border-[#dce9ff] rounded-xl px-3.5 py-2.5 text-xs text-[#0b1c30] placeholder-[#76777d] focus:outline-none focus:border-[#0058be] focus:ring-1 focus:ring-[#0058be] disabled:opacity-60"
                 />
 
                 <Button
@@ -610,89 +480,24 @@ export default function Conversations() {
                   size="sm"
                   disabled={!inputMessage.trim() || isSending}
                   rightIcon={isSending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  className="font-bold"
+                  className="font-bold px-4 py-2.5"
                 >
-                  Send
+                  {isSending ? 'Sending...' : 'Send'}
                 </Button>
               </form>
             </>
-          ) : null}
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff] mb-3">
+                <MessageSquare className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-sm text-[#0b1c30]">Select a conversation</h3>
+              <p className="text-xs text-[#76777d] mt-1 max-w-xs">
+                Choose an inquiry from the left panel to inspect message history and test the AI agent.
+              </p>
+            </div>
+          )}
         </div>
-
-        {/* ================= RIGHT PANEL: 5-STAGE AI REASONING INSPECTOR ================= */}
-        {showReasoningDrawer && activeConversation && (
-          <div className="hidden lg:flex w-80 border-l border-[#e5eeff] flex-col bg-[#f8f9ff] p-4 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#e5eeff]">
-              <Layers className="w-4 h-4 text-[#0058be]" />
-              <h3 className="font-heading font-bold text-xs text-[#0b1c30] uppercase tracking-wider">
-                5-Stage Reasoning Trace
-              </h3>
-            </div>
-
-            <div className="flex flex-col gap-3 text-xs">
-              {/* Stage 1 */}
-              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
-                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
-                  01. INGESTION
-                </span>
-                <span className="font-semibold text-[#0b1c30] block">
-                  {activeConversation.channel} Webhook
-                </span>
-                <span className="text-[11px] text-[#76777d] mt-0.5 block">
-                  Latency: 142ms • Verified Source
-                </span>
-              </div>
-
-              {/* Stage 2 */}
-              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
-                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
-                  02. CONTEXT & BANT
-                </span>
-                <div className="flex flex-col gap-1 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-[#76777d]">Budget:</span>
-                    <strong className="text-[#0b1c30]">{activeConversation.bant?.budget || '$35,000 ARR'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#76777d]">Score:</span>
-                    <strong className="text-[#0c9488] font-bold">{activeConversation.bant?.score || activeConversation.intentScore || 94} / 100</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stage 3 */}
-              <div className="p-3 rounded-xl bg-white border border-[#e5eeff] shadow-xs">
-                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
-                  03. FLOW POLICY
-                </span>
-                <span className="font-semibold text-[#004395] block">
-                  {activeConversation.flowRuleMatched || 'Enterprise Inbound Flow ($30k+)'}
-                </span>
-              </div>
-
-              {/* Stage 4 */}
-              <div className="p-3 rounded-xl bg-[#eff4ff] border border-[#0058be] shadow-xs">
-                <span className="font-mono text-[10px] font-bold text-[#0058be] block mb-1">
-                  04. MUTATION EXECUTED
-                </span>
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#0058be]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0c9488]" />
-                  <span>Lead Created & Booked</span>
-                </div>
-              </div>
-
-              {/* Stage 5 */}
-              <div className="p-3 rounded-xl bg-[#0b1c30] text-white border border-[#131b2e] shadow-xs">
-                <span className="font-mono text-[10px] font-bold text-[#89f5e7] block mb-1">
-                  05. NEXT CONTINUED FLOW
-                </span>
-                <span className="text-[11px] text-[#adc6ff] block leading-snug">
-                  {activeConversation.nextChainedAction || 'Dispatch SOW #SOW-412 & Schedule Onboarding'}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </Card>
     </div>
   );
