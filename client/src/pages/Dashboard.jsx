@@ -252,7 +252,7 @@ export default function Dashboard() {
             size="sm"
             onClick={() => showToast('Refreshed live telemetry data.')}
             leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-            className="text-xs font-semibold text-[#0b1c30]"
+            className="text-xs font-semibold text-[#0058be] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
           >
             Sync Telemetry
           </Button>
@@ -331,7 +331,7 @@ export default function Dashboard() {
         {/* 5-Step Visual Pipeline Stepper Grid */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {/* Stage 1: Ingest */}
-          <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col justify-between gap-3">
+          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs font-bold text-[#0058be]">01. INGEST</span>
               <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
@@ -344,13 +344,13 @@ export default function Dashboard() {
                 WhatsApp, SMS, Web Chat, Email Webhooks
               </span>
             </div>
-            <div className="pt-2 border-t border-[#e5eeff] text-[11px] font-semibold text-[#004395]">
+            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
               12 Active Streams
             </div>
           </div>
 
           {/* Stage 2: Understand */}
-          <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col justify-between gap-3">
+          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs font-bold text-[#0058be]">02. UNDERSTAND</span>
               <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
@@ -363,13 +363,13 @@ export default function Dashboard() {
                 Context Extraction, 0-100 Score Evaluation
               </span>
             </div>
-            <div className="pt-2 border-t border-[#e5eeff] text-[11px] font-semibold text-[#004395]">
+            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
               94.2 Avg Score
             </div>
           </div>
 
           {/* Stage 3: Decide */}
-          <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col justify-between gap-3">
+          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#d8e2ff] flex flex-col justify-between gap-3">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs font-bold text-[#0058be]">03. DECIDE</span>
               <span className="w-2 h-2 rounded-full bg-[#0c9488]" />
@@ -382,13 +382,13 @@ export default function Dashboard() {
                 Enterprise Rules, SLA Triggers, Priority Routing
               </span>
             </div>
-            <div className="pt-2 border-t border-[#e5eeff] text-[11px] font-semibold text-[#004395]">
+            <div className="pt-2 border-t border-[#d8e2ff] text-[11px] font-semibold text-[#004395]">
               100% Policy Match
             </div>
           </div>
 
           {/* Stage 4: Act */}
-          <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#0058be] flex flex-col justify-between gap-3 shadow-xs">
+          <div className="p-4 rounded-2xl bg-[#e5eeff] border border-[#0058be] flex flex-col justify-between gap-3 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs font-bold text-[#0058be]">04. ACT</span>
               <span className="w-2 h-2 rounded-full bg-[#0058be] animate-pulse" />
@@ -450,13 +450,13 @@ export default function Dashboard() {
               variant="default"
               className={`p-5 border transition-all flex flex-col justify-between ${
                 appr.status === 'approved'
-                  ? 'bg-[#e6fcf8]/40 border-[#89f5e7]'
+                  ? 'bg-[#e6fcf8] border-[#89f5e7]'
                   : 'bg-white border-[#e5eeff] hover:border-[#0058be] shadow-[0_1px_3px_rgba(11,28,48,0.05)]'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-3 text-xs">
-                  <Badge variant="secondary" size="sm">
+                  <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
                     {appr.channel}
                   </Badge>
                   <span className="font-mono text-[11px] text-[#76777d]">{appr.time}</span>
@@ -500,7 +500,7 @@ export default function Dashboard() {
                       size="sm"
                       fullWidth
                       onClick={() => handleApprove(appr.id)}
-                      className="text-xs font-bold"
+                      className="text-xs font-bold shadow-[0_4px_14px_rgba(0,88,190,0.2)]"
                     >
                       Approve & Execute
                     </Button>
@@ -508,7 +508,7 @@ export default function Dashboard() {
                       variant="secondary"
                       size="sm"
                       onClick={() => showToast('Action skipped.')}
-                      className="text-xs text-[#45464d]"
+                      className="text-xs text-[#45464d] border-[#d8e2ff] bg-white hover:bg-[#eff4ff]"
                     >
                       Dismiss
                     </Button>
@@ -565,9 +565,9 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-[#e5eeff] bg-white">
                 {filteredFeed.map((row) => (
-                  <tr key={row.id} className="hover:bg-[#f8f9ff]/70 transition-colors">
+                  <tr key={row.id} className="hover:bg-[#f8f9ff] transition-colors">
                     <td className="py-4 px-6">
-                      <div className="font-semibold text-[#0b1c30] text-xs">
+                      <div className="font-bold text-[#0b1c30] text-xs">
                         {row.customer}
                       </div>
                       <div className="text-[11px] text-[#76777d] truncate mt-0.5">
@@ -576,7 +576,7 @@ export default function Dashboard() {
                     </td>
 
                     <td className="py-4 px-6">
-                      <Badge variant="secondary" size="sm" className="text-[10px]">
+                      <Badge variant="secondary" size="sm" className="text-[10px] bg-[#eff4ff] text-[#004395] border-[#d8e2ff]">
                         {row.channel}
                       </Badge>
                     </td>
@@ -588,13 +588,13 @@ export default function Dashboard() {
                     </td>
 
                     <td className="py-4 px-6">
-                      <Badge variant="success" size="sm" className="text-[10px]">
+                      <Badge variant="success" size="sm" className="text-[10px] bg-[#e6fcf8] text-[#005049] border-[#89f5e7]">
                         {row.bantScore}/100
                       </Badge>
                     </td>
 
                     <td className="py-4 px-6">
-                      <div className="font-medium text-[#0058be] text-xs">
+                      <div className="font-semibold text-[#0058be] text-xs">
                         {row.flowRule}
                       </div>
                       <div className="text-[10px] text-[#76777d] mt-0.5">
@@ -607,7 +607,7 @@ export default function Dashboard() {
                         variant="secondary"
                         size="sm"
                         onClick={() => handleInspect(row)}
-                        className="text-[11px] font-semibold text-[#0058be] hover:bg-[#eff4ff] border-[#d8e2ff]"
+                        className="text-[11px] font-semibold text-[#0058be] hover:bg-[#eff4ff] border-[#d8e2ff] bg-white"
                       >
                         Inspect Flow
                       </Button>
@@ -633,7 +633,7 @@ export default function Dashboard() {
             <div className="p-4 rounded-xl bg-[#f8f9ff] border border-[#dce9ff] flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-[#76777d]">Customer Message:</span>
-                <span className="font-mono text-[10px] text-[#0058be]">{inspectedActivity.channel}</span>
+                <span className="font-mono text-[10px] text-[#0058be] font-bold">{inspectedActivity.channel}</span>
               </div>
               <p className="text-xs sm:text-sm font-medium text-[#0b1c30] leading-relaxed">
                 "{inspectedActivity.message}"
@@ -659,7 +659,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#0b1c30] text-white border border-[#131b2e] flex flex-col gap-2">
+            <div className="p-4 rounded-xl bg-[#0b1c30] text-white border border-[#131b2e] flex flex-col gap-2 shadow-xs">
               <span className="text-[10px] uppercase font-bold text-[#89f5e7]">
                 Completed Backend Mutations
               </span>
@@ -674,6 +674,7 @@ export default function Dashboard() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setInspectModalOpen(false)}
+                className="border-[#d8e2ff] text-[#45464d]"
               >
                 Close Audit
               </Button>
