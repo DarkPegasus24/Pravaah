@@ -1,13 +1,13 @@
 import React from 'react';
 
 const cardVariants = {
-  default: 'bg-white border border-neutral-200 text-black shadow-sm',
-  elevated: 'bg-white border border-neutral-300 text-black shadow-md',
+  default: 'bg-white border border-[#e5eeff] text-[#0b1c30] shadow-[0_1px_3px_rgba(11,28,48,0.05)]',
+  elevated: 'bg-white border border-[#dce9ff] text-[#0b1c30] shadow-[0_4px_12px_rgba(11,28,48,0.06)]',
   interactive:
-    'bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-black text-black transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5',
+    'bg-white hover:bg-[#f8f9ff] border border-[#e5eeff] hover:border-[#0058be] text-[#0b1c30] transition-all duration-200 cursor-pointer shadow-[0_1px_3px_rgba(11,28,48,0.05)] hover:shadow-[0_10px_20px_-3px_rgba(0,88,190,0.08)] hover:-translate-y-0.5',
   glass:
-    'bg-white/95 backdrop-blur-md border border-neutral-200 text-black shadow-sm',
-  flat: 'bg-neutral-50 border border-neutral-200 text-black',
+    'bg-white/95 backdrop-blur-md border border-[#dce9ff] text-[#0b1c30] shadow-[0_1px_3px_rgba(11,28,48,0.05)]',
+  flat: 'bg-[#f8f9ff] border border-[#e5eeff] text-[#0b1c30]',
 };
 
 export function Card({
@@ -31,7 +31,7 @@ export function Card({
 export function CardHeader({ children, className = '', ...props }) {
   return (
     <div
-      className={`px-6 py-5 border-b border-neutral-200 flex flex-col gap-1.5 ${className}`}
+      className={`px-6 py-5 border-b border-[#e5eeff] bg-[#f8f9ff]/50 flex flex-col gap-1.5 ${className}`}
       {...props}
     >
       {children}
@@ -42,7 +42,7 @@ export function CardHeader({ children, className = '', ...props }) {
 export function CardTitle({ children, className = '', as: Component = 'h3', ...props }) {
   return (
     <Component
-      className={`text-lg font-semibold tracking-tight text-black ${className}`}
+      className={`text-lg font-bold tracking-tight text-[#0b1c30] ${className}`}
       {...props}
     >
       {children}
@@ -52,7 +52,7 @@ export function CardTitle({ children, className = '', as: Component = 'h3', ...p
 
 export function CardDescription({ children, className = '', ...props }) {
   return (
-    <p className={`text-xs text-neutral-500 leading-relaxed ${className}`} {...props}>
+    <p className={`text-xs text-[#45464d] leading-relaxed ${className}`} {...props}>
       {children}
     </p>
   );
@@ -69,7 +69,7 @@ export function CardContent({ children, className = '', ...props }) {
 export function CardFooter({ children, className = '', ...props }) {
   return (
     <div
-      className={`px-6 py-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between gap-3 ${className}`}
+      className={`px-6 py-4 bg-[#f8f9ff] border-t border-[#e5eeff] flex items-center justify-between gap-3 ${className}`}
       {...props}
     >
       {children}

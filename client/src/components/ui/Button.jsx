@@ -2,17 +2,17 @@ import React from 'react';
 
 const variantClasses = {
   primary:
-    'bg-black text-white font-semibold hover:bg-white hover:text-black border border-black transition-all duration-200 active:scale-[0.98] shadow-sm',
+    'bg-[#000000] text-white font-semibold hover:bg-[#131b2e] hover:shadow-md border border-black transition-all duration-200 active:scale-[0.98] shadow-xs',
   secondary:
-    'bg-white hover:bg-neutral-100 text-black border border-neutral-300 hover:border-black transition-all duration-200 active:scale-[0.98]',
+    'bg-white hover:bg-[#eff4ff] text-[#0b1c30] border border-[#dce9ff] hover:border-[#0058be] hover:text-[#0058be] transition-all duration-200 active:scale-[0.98] shadow-xs',
   outline:
-    'bg-transparent hover:bg-black hover:text-white text-black border border-black transition-all duration-200 active:scale-[0.98]',
+    'bg-transparent hover:bg-[#eff4ff] text-[#0058be] border border-[#0058be] transition-all duration-200 active:scale-[0.98]',
   ghost:
-    'bg-transparent hover:bg-neutral-100 text-neutral-700 hover:text-black transition-all duration-200 active:scale-[0.98]',
+    'bg-transparent hover:bg-[#eff4ff] text-[#45464d] hover:text-[#0b1c30] transition-all duration-200 active:scale-[0.98]',
   danger:
-    'bg-neutral-100 hover:bg-black hover:text-white text-black font-semibold transition-all duration-200 active:scale-[0.98] border border-neutral-400',
+    'bg-[#ffdad6] hover:bg-[#ba1a1a] text-[#93000a] hover:text-white font-semibold transition-all duration-200 active:scale-[0.98] border border-[#ffb4ab]',
   accent:
-    'bg-black text-white font-semibold hover:bg-white hover:text-black border border-black transition-all duration-200 active:scale-[0.98]',
+    'bg-[#0058be] hover:bg-[#2170e4] text-white font-semibold transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-[0_4px_14px_rgba(0,88,190,0.25)] border border-[#0058be]',
 };
 
 const sizeClasses = {

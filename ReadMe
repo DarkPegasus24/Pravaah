@@ -1,0 +1,162 @@
+# PRAVAAH — Complete Product & Operations Manual
+
+> **Tagline**: *From Customer Conversation to Business Action. Automatically.*  
+> **Alternative Tagline**: *Where Business Workflows Flow Automatically.*  
+> **Core Operating Philosophy**: *"Most AI assistants stop after answering. Pravaah continues until the business workflow moves forward to completion."*
+
+---
+
+## 1. Executive Summary & Brand Identity
+
+**Pravaah** (representing *flow, movement, and continuous progression*) is an AI-powered B2B SaaS Business Operations Platform. It converts customer interactions across WhatsApp, Web Chat, SMS, and Email into completed business actions, qualified CRM opportunities, booked calendar meetings, and continuous workflows.
+
+### The 5-Stage Continuous Flow Engine Architecture
+```text
+[1. INPUT] Customer Interaction (WhatsApp / Web Chat / SMS / Email / SOW / Invoice)
+       ↓
+[2. UNDERSTAND] Pravaah AI Context & Entity Extraction (BANT 0-100, Intent, Deal Size, Urgency)
+       ↓
+[3. DECIDE] Autonomous Flow Rule Determination & Validation (Enterprise Policy, SLA Router)
+       ↓
+[4. ACT] Business Tool & Mutation Execution (CRM Lead Created, Calendar Booked, SOW Dispatched)
+       ↓
+[5. CONTINUE] Next Business Workflow Begins Automatically (Meeting Prep Brief, Follow-up Queue, Stage Advance)
+```
+
+---
+
+## 2. Standard Brand Terminology
+
+| Traditional Concept | Pravaah Standard Terminology | Definition & Operational Meaning |
+| :--- | :--- | :--- |
+| **AI Chatbot / Assistant** | **Pravaah Agent** | Autonomous 24/7 omnichannel listener and executor. |
+| **Automation Workflow** | **Flow** | Multi-stage autonomous process advancing customer intent to business completion. |
+| **Workflow Pipeline** | **Business Flow** | End-to-end chained sequence of operational business tasks. |
+| **Automation Rule** | **Flow Rule** | Business logic trigger, conditional criteria, and execution policies. |
+| **Audit / Telemetry Log** | **Flow Activity** | Real-time, transparent audit trail of every autonomous decision and tool call. |
+| **AI Action / Tool Call** | **Pravaah Action** | Individual backend mutation (e.g. Lead creation, Calendar booking, Document OCR). |
+| **Lead History** | **Flow History** | Time-stamped history of interactions and automated advancements for a specific contact. |
+| **Business Dashboard** | **Pravaah Command Center** | Central executive operational interface for telemetry, approvals, and metrics. |
+
+---
+
+## 3. Comprehensive Page-by-Page & Button Functionality Guide
+
+### Page 1: Landing Page (`/`) — `client/src/pages/Landing.jsx`
+* **Floating Header**:
+  * `Pravaah Logo`: Scrolls viewport to `#hero`.
+  * Nav Links (`Live Flow Demo`, `5-Stage Architecture`, `Operations Suite`, `Why Pravaah`): Smoothly scroll to respective page sections.
+  * `Command Center` Button: Navigates to `/dashboard`.
+  * `Sign In` Button: Navigates to `/login`.
+  * `Start Your Flow` Button: Primary conversion CTA navigating to `/signup`.
+  * Hamburger Toggle Button: Opens/closes responsive mobile drawer.
+* **Hero Section**:
+  * `Start Your Flow` Button: Navigates to `/signup` with 14-day trial.
+  * `Watch Pravaah in Action` Button: Opens interactive 5-step walkthrough modal (`WatchPravaahModal`).
+* **Live Flow Simulator (`InteractiveFlowHero.jsx`)**:
+  * Scenario Buttons (`💼 Enterprise Inbound ($30k)`, `🚨 Urgent SLA Escalation`, `📄 Contract SOW Execution`): Pre-load realistic customer inquiries.
+  * `Simulate Flow` (Send) Button: Triggers 5-stage animated reasoning stepper (`INPUT -> UNDERSTAND -> DECIDE -> ACT -> CONTINUE`).
+  * `Reset Simulation` (Rotate) Button: Clears the simulation back to default.
+  * `Launch Command Center` Button: Navigates to `/dashboard`.
+* **5-Stage Architecture Visualizer (`ArchitectureShowcase.jsx`)**:
+  * Stage Buttons (`01. INPUT` through `05. CONTINUE`): Dynamically switches active stage spotlight, bullet points, and live architecture blueprint diagram.
+* **Walkthrough Modal (`WatchPravaahModal.jsx`)**:
+  * `Play / Pause` Button: Starts/stops auto-progression timer.
+  * `Previous` / `Next` Buttons: Manual step-by-step navigation.
+  * Step Indicator Buttons (1-5): Instant jump to any stage.
+  * `Start 14-Day Free Trial` Button: Direct signup conversion.
+
+---
+
+### Page 2: Pravaah Command Center (`/dashboard`) — `client/src/pages/Dashboard.jsx`
+* **Executive Header**:
+  * `● Continuous Flow Active` Pill: Pulsing teal status indicator showing 24/7 background listener is online.
+  * `Sync Telemetry` Button: Refreshes real-time telemetry with a confirmation toast.
+  * `Open Conversations Engine` Button: Navigates directly to `/dashboard/conversations`.
+* **5 Operational Velocity KPI Cards**:
+  * *Flow Execution Velocity (`99.4%`)* — 1,482 actions automated with zero drop-off.
+  * *AI Qualified Leads (`412`)* — $1.84M qualified pipeline with 88.5 avg BANT score.
+  * *Meetings Booked (`89`)* — Autonomous conflict-free calendar booking.
+  * *Documents Processed (`164`)* — OCR extracted contracts & CRM stage syncing.
+  * *Operations Hours Saved (`142.5h`)* — $18.4k estimated monthly labor ROI.
+* **Real-Time 5-Stage Pipeline Monitor**:
+  * Visual execution monitor tracking stages: `01. INGEST` → `02. UNDERSTAND` → `03. DECIDE` → `04. ACT` → `05. CONTINUE`.
+* **Human-in-the-Loop Approval Queue**:
+  * `Approve & Execute` Button (for each pending high-stakes deal): Mutates state to `"Approved & Executed"`, updates status badge to green, and triggers feedback toast.
+  * `Dismiss` Button: Skips item with feedback toast.
+* **Omnichannel Telemetry Table & Filters**:
+  * Channel Filter Buttons (`All`, `WhatsApp`, `Web Chat`, `SMS Inbound`, `Email Inbound`): Filters live interaction events.
+  * `Inspect Flow` Button: Opens the Telemetry Audit Modal for that interaction event.
+* **Telemetry Inspection Modal**:
+  * `Close Audit` Button: Closes the modal.
+  * `View in Conversations Hub` Button: Jumps directly to matching thread in `/dashboard/conversations`.
+
+---
+
+### Page 3: Dashboard Layout Shell — `client/src/layouts/DashboardLayout.jsx`
+* **Desktop Sidebar**:
+  * `PravaahLogo` Link: Navigates to `/dashboard`.
+  * `Overview` NavLink: Navigates to `/dashboard`.
+  * `Conversations` NavLink: Navigates to `/dashboard/conversations`.
+* **Topbar**:
+  * Mobile Drawer Menu Button: Toggles mobile navigation menu.
+  * Business Selector Pill (`Demo Operations HQ`): Displays tenant status.
+  * `● Autopilot Active` Badge: Live pulsating telemetry indicator.
+  * Notifications Bell Button: Opens alerts dropdown with `Mark all read` action.
+  * User Avatar Button: Opens profile menu with user details and `Sign Out` button.
+
+---
+
+### Page 4: Conversations Hub (`/dashboard/conversations`) — `client/src/pages/Conversations.jsx`
+* **Search & Filters**: Real-time filtering by customer name, company, or message snippet.
+* **Conversation List Items**: Selects active thread and marks unread messages as read.
+* **`AI Autopilot Mode` Toggle Switch**: Switches between automated AI execution and manual human agent takeover.
+* **Message Input & `Send` Button**: Sends manual message into thread.
+* **Attachment Button (`<Paperclip />`)**: Prompts file attachment.
+* **AI Quick Suggestion Chips**: Context-aware 1-click replies and action triggers.
+* **5-Stage AI Reasoning Drawer**: Detailed step-by-step breakdown of AI decision making.
+
+---
+
+### Page 5: Authentication Pages (`/login` & `/signup`)
+* **Login (`/login`)**:
+  * `Show / Hide Password` Button: Toggles password masking.
+  * `Remember this browser` Checkbox: Caches login session.
+  * `Sign in to Workspace` Button: Authenticates and navigates to `/dashboard`.
+  * `Auto-Fill Demo Admin Account` Button: Fills demo admin credentials.
+* **Signup (`/signup`)**:
+  * Business Name, Owner Name, Work Email, Phone, and Password fields.
+  * Interactive 3-Tier Password Strength Meter (`Weak`, `Good`, `Strong`).
+  * Terms & Privacy agreement checkbox.
+  * `Create Free Workspace` Button: Provisions trial account and opens `/dashboard`.
+
+---
+
+## 4. UI Design System Tokens (Reliant Enterprise)
+
+All UI elements adhere to [`DESIGN.md`](file:///c:/Users/Manve/Desktop/Pravaah/DESIGN.md):
+* **Canvas Surface**: `#f8f9ff`
+* **Card Containers**: Pure White `#ffffff` with border `#e5eeff` and shadow `0 1px 3px rgba(11,28,48,0.05)`
+* **Primary Headings**: Deep Navy `#0b1c30`
+* **Body Text**: Slate `#45464d`
+* **Interactive Blue (Buttons / Active)**: `#0058be` / `#2170e4`
+* **Success / BANT Teal**: `#0c9488` / `#89f5e7`
+* **Error / Red**: `#ba1a1a` on `#ffdad6`
+* **Smooth Scrolling**: Global `scroll-behavior: smooth` + `ScrollToTop` helper.
+
+---
+
+## 5. Development Commands
+
+```bash
+# Start frontend development server
+cd c:\Users\Manve\Desktop\Pravaah\client
+npm run dev
+
+# Run production build validation
+npm run build
+```
+
+---
+
+*Pravaah Technologies, Inc. — Autonomous Revenue & Operations Engine.*
