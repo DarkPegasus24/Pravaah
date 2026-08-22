@@ -1,1 +1,87 @@
 @import "tailwindcss";
+
+@theme {
+  /* Typography */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Brand Primary: Strict Black / Monochrome */
+  --color-brand-50: #fafafa;
+  --color-brand-100: #f5f5f5;
+  --color-brand-200: #e5e5e5;
+  --color-brand-300: #d4d4d4;
+  --color-brand-400: #a3a3a3;
+  --color-brand-500: #000000;
+  --color-brand-600: #171717;
+  --color-brand-700: #262626;
+  --color-brand-800: #404040;
+  --color-brand-900: #525252;
+  --color-brand-950: #000000;
+
+  /* Accent: Dark Charcoal / Black */
+  --color-accent-50: #fafafa;
+  --color-accent-100: #f5f5f5;
+  --color-accent-200: #e5e5e5;
+  --color-accent-300: #d4d4d4;
+  --color-accent-400: #737373;
+  --color-accent-500: #000000;
+  --color-accent-600: #171717;
+  --color-accent-700: #262626;
+  --color-accent-800: #404040;
+  --color-accent-900: #525252;
+  --color-accent-950: #000000;
+
+  /* Surface Neutrals: Pure White / Light Gray / Neutral Borders */
+  --color-surface-bg: #ffffff;
+  --color-surface-card: #ffffff;
+  --color-surface-card-hover: #f9fafb;
+  --color-surface-elevated: #f4f4f5;
+  --color-surface-border: #e4e4e7;
+  --color-surface-border-light: #d4d4d8;
+  --color-surface-muted: #71717a;
+  --color-surface-text: #18181b;
+  --color-surface-heading: #000000;
+
+  /* Status Colors: Strict Monochrome Black/Gray/White */
+  --color-status-success: #000000;
+  --color-status-warning: #52525b;
+  --color-status-danger: #000000;
+  --color-status-info: #27272a;
+
+  /* Glow and shadow tokens */
+  --shadow-brand-glow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+  --shadow-card-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+:root {
+  --font-family-heading: var(--font-heading);
+  --font-family-body: var(--font-sans);
+}
+
+/* Custom Base Utility Styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Crisp monochrome scrollbars: light gray track / black thumb */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+::-webkit-scrollbar-thumb {
+  background: #a1a1aa;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
