@@ -7,6 +7,7 @@ import Landing from './pages/Landing';
 // import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Conversations from './pages/Conversations';
+import Calling from './pages/Calling';
 import Docs from './pages/Docs';
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="conversations" element={<Conversations />} />
+          <Route path="calling" element={<Calling />} />
         </Route>
       </Routes>
     </BrowserRouter>

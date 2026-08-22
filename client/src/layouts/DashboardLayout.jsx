@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   MessageSquare,
+  Phone,
   Bell,
   Menu,
   X,
@@ -44,6 +45,11 @@ export default function DashboardLayout() {
       name: 'Conversations',
       path: '/dashboard/conversations',
       icon: <MessageSquare className="w-5 h-5" />,
+    },
+    {
+      name: 'Calling',
+      path: '/dashboard/calling',
+      icon: <Phone className="w-5 h-5" />,
     },
   ];
 
