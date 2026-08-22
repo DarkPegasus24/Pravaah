@@ -247,48 +247,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 3. Performance Metrics Bar */}
-      <section className="py-10 bg-[#0b1c30] text-white border-y border-[#131b2e] font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div className="flex flex-col items-center">
-              <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                99.2%
-              </span>
-              <span className="text-xs text-[#adc6ff] mt-1 uppercase font-semibold tracking-wider">
-                Flow Execution Rate
-              </span>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                142+ hrs
-              </span>
-              <span className="text-xs text-neutral-400 mt-1 uppercase font-semibold tracking-wider">
-                Saved Monthly / Org
-              </span>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                3.4x
-              </span>
-              <span className="text-xs text-neutral-400 mt-1 uppercase font-semibold tracking-wider">
-                Faster Lead-to-Meeting
-              </span>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <span className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                24/7
-              </span>
-              <span className="text-xs text-neutral-400 mt-1 uppercase font-semibold tracking-wider">
-                Autonomous Uptime
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 4. 5-Stage Architecture Visualizer */}
       <div id="architecture" className="scroll-mt-20">
