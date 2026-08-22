@@ -1,25 +1,25 @@
 import React from 'react';
 
 const badgeVariants = {
-  primary: 'bg-black text-white border-black',
-  accent: 'bg-neutral-900 text-white border-black',
-  secondary: 'bg-neutral-100 text-neutral-800 border-neutral-300',
-  success: 'bg-neutral-100 text-black border-black font-semibold',
-  warning: 'bg-neutral-100 text-neutral-800 border-neutral-400',
-  danger: 'bg-neutral-200 text-neutral-900 border-neutral-500',
-  info: 'bg-neutral-100 text-neutral-900 border-neutral-300',
-  outline: 'bg-white text-black border-neutral-400',
+  primary: 'bg-[#000000] text-white border-black shadow-xs',
+  accent: 'bg-[#0058be] text-white border-[#0058be] shadow-xs',
+  secondary: 'bg-[#eff4ff] text-[#004395] border-[#d8e2ff]',
+  success: 'bg-[#e6fcf8] text-[#005049] border-[#89f5e7] font-semibold',
+  warning: 'bg-[#fef3c7] text-[#92400e] border-[#fde68a]',
+  danger: 'bg-[#ffdad6] text-[#93000a] border-[#ffb4ab] font-semibold',
+  info: 'bg-[#e5eeff] text-[#0058be] border-[#dce9ff]',
+  outline: 'bg-white text-[#0b1c30] border-[#dce9ff]',
 };
 
 const dotColors = {
   primary: 'bg-white',
   accent: 'bg-white',
-  secondary: 'bg-neutral-600',
-  success: 'bg-black',
-  warning: 'bg-neutral-700',
-  danger: 'bg-neutral-800',
-  info: 'bg-neutral-600',
-  outline: 'bg-black',
+  secondary: 'bg-[#0058be]',
+  success: 'bg-[#0c9488]',
+  warning: 'bg-[#d97706]',
+  danger: 'bg-[#ba1a1a]',
+  info: 'bg-[#0058be]',
+  outline: 'bg-[#0b1c30]',
 };
 
 const sizeClasses = {

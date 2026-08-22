@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Badge, Button } from '../components/ui';
+import { PravaahLogo } from '../components/common/PravaahLogo';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -67,42 +68,30 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col md:flex-row antialiased selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] flex flex-col md:flex-row antialiased selection:bg-[#0058be] selection:text-white">
       {/* 1. Desktop / Tablet Sidebar */}
       <aside
-        className={`hidden md:flex flex-col border-r border-neutral-200 bg-white transition-all duration-300 z-30 sticky top-0 h-screen ${
+        className={`hidden md:flex flex-col border-r border-[#e5eeff] bg-white transition-all duration-300 z-30 sticky top-0 h-screen shadow-xs ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         {/* Sidebar Header: Logo & Brand */}
-        <div className="h-18 px-4 flex items-center justify-between border-b border-neutral-200">
+        <div className="h-18 px-4 flex items-center justify-between border-b border-[#e5eeff]">
           <Link
             to="/dashboard"
             className="flex items-center gap-3 overflow-hidden group focus:outline-none"
           >
-            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform shrink-0">
-              <Sparkles className="w-4.5 h-4.5 text-white" />
-            </div>
-
-            {!isCollapsed && (
-              <div className="flex flex-col animate-fadeIn overflow-hidden whitespace-nowrap">
-                <span className="font-heading font-bold text-lg text-black tracking-tight flex items-center gap-1.5">
-                  PRAVAAH
-                  <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-black text-white">
-                    AI
-                  </span>
-                </span>
-                <span className="text-[10px] text-neutral-500 truncate -mt-0.5">
-                  Conversations Engine
-                </span>
-              </div>
+            {isCollapsed ? (
+              <PravaahLogo size="sm" iconOnly={true} />
+            ) : (
+              <PravaahLogo size="sm" showTagline={true} />
             )}
           </Link>
 
           {/* Desktop collapse toggle button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg text-neutral-500 hover:text-black hover:bg-neutral-100 transition-colors cursor-pointer"
+            className="hidden lg:flex p-1.5 rounded-lg text-[#76777d] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-colors cursor-pointer"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label="Toggle Sidebar"
           >
@@ -114,10 +103,10 @@ export default function DashboardLayout() {
           </button>
         </div>
 
-        {/* Navigation Links (Only Overview & Conversations) */}
+        {/* Navigation Links */}
         <div className="flex-1 py-5 px-3 flex flex-col gap-1.5 overflow-y-auto">
           {!isCollapsed && (
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#76777d]">
               Navigation
             </div>
           )}
@@ -130,8 +119,8 @@ export default function DashboardLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 group relative ${
                   isActive
-                    ? 'bg-black text-white font-semibold shadow-sm'
-                    : 'text-neutral-600 hover:text-black hover:bg-neutral-100 border border-transparent'
+                    ? 'bg-[#0b1c30] text-white font-semibold shadow-xs'
+                    : 'text-[#45464d] hover:text-[#0058be] hover:bg-[#eff4ff] border border-transparent'
                 } ${isCollapsed ? 'justify-center px-0' : ''}`
               }
               title={isCollapsed ? item.name : undefined}
@@ -140,7 +129,7 @@ export default function DashboardLayout() {
                 <>
                   <div
                     className={`transition-colors shrink-0 ${
-                      isActive ? 'text-white' : 'text-neutral-500 group-hover:text-black'
+                      isActive ? 'text-white' : 'text-[#76777d] group-hover:text-[#0058be]'
                     }`}
                   >
                     {item.icon}
@@ -153,8 +142,8 @@ export default function DashboardLayout() {
                         <span
                           className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                             isActive
-                              ? 'bg-white text-black'
-                              : 'bg-neutral-100 text-neutral-800 border border-neutral-200'
+                              ? 'bg-white text-[#0b1c30]'
+                              : 'bg-[#eff4ff] text-[#004395] border border-[#d8e2ff]'
                           }`}
                         >
                           {item.badge}
@@ -169,28 +158,28 @@ export default function DashboardLayout() {
         </div>
 
         {/* Sidebar Footer: AI Status Card */}
-        <div className="p-3 border-t border-neutral-200">
+        <div className="p-3 border-t border-[#e5eeff]">
           {!isCollapsed ? (
-            <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 flex flex-col gap-2">
+            <div className="p-3 rounded-xl bg-[#eff4ff] border border-[#dce9ff] flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-black">
-                  <Zap className="w-3.5 h-3.5 text-black" />
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#004395]">
+                  <Zap className="w-3.5 h-3.5 text-[#0058be]" />
                   <span>Autopilot Mode</span>
                 </div>
                 <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0c9488] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0c9488]" />
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-500 leading-tight">
+              <p className="text-[11px] text-[#45464d] leading-tight">
                 AI actively listening to conversations.
               </p>
             </div>
           ) : (
             <div className="flex justify-center" title="Autopilot Active">
               <span className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-black" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0c9488] opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0c9488]" />
               </span>
             </div>
           )}
@@ -211,13 +200,8 @@ export default function DashboardLayout() {
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
-                <Link to="/dashboard" className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold">
-                    <Sparkles className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="font-heading font-bold text-lg text-black tracking-tight">
-                    PRAVAAH
-                  </span>
+                <Link to="/dashboard" className="flex items-center">
+                  <PravaahLogo size="sm" showTagline={false} />
                 </Link>
                 <button
                   onClick={() => setMobileDrawerOpen(false)}
@@ -274,42 +258,44 @@ export default function DashboardLayout() {
       )}
 
       {/* 3. Main Application Column */}
-      <div className="flex-1 flex flex-col min-w-0 pb-24 md:pb-0 bg-white">
+      <div className="flex-1 flex flex-col min-w-0 pb-24 md:pb-0 bg-[#f8f9ff]">
         {/* Topbar (Compact & Rounded) */}
-        <header className="h-14 sticky top-0 z-20 bg-white/90 backdrop-blur-xl border-b border-neutral-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        <header className="h-16 sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-[#e5eeff] px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           {/* Left: Mobile menu toggle + Business Name */}
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden p-1.5 rounded-full bg-neutral-50 border border-neutral-200 text-black hover:bg-neutral-100"
+              className="md:hidden p-1.5 rounded-xl bg-[#eff4ff] border border-[#d8e2ff] text-[#0b1c30] hover:bg-[#dce9ff]"
               aria-label="Open Navigation Menu"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-4 h-4 text-[#0058be]" />
             </button>
 
             {/* Business Selector Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-50 border border-neutral-200 hover:border-black transition-colors cursor-pointer select-none">
-              <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#eff4ff] border border-[#d8e2ff] hover:border-[#0058be] transition-colors cursor-pointer select-none">
+              <div className="w-5 h-5 rounded-full bg-[#0058be] text-white flex items-center justify-center">
                 <Building2 className="w-3 h-3 text-white" />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="font-heading font-semibold text-xs text-black">
-                  Demo Business
+                <span className="font-heading font-bold text-xs text-[#004395]">
+                  Demo Operations HQ
                 </span>
-                <Badge variant="primary" size="sm" className="hidden sm:inline-flex text-[9px] px-1.5 py-0 rounded-full">
-                  Live
+                <Badge variant="secondary" size="sm" className="hidden sm:inline-flex text-[9px] px-1.5 py-0 rounded-full bg-white text-[#0058be] border-[#d8e2ff]">
+                  Live Hub
                 </Badge>
               </div>
             </div>
           </div>
 
           {/* Right: Actions, Notifications & Profile Avatar */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Live Autopilot Status Indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-50 border border-neutral-200 text-xs">
-              <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
-              <span className="text-neutral-500 text-[10px]">AI Autopilot:</span>
-              <span className="text-black font-semibold text-[10px]">Live & Listening</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[#e6fcf8] border border-[#89f5e7] text-xs">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0c9488] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0c9488]" />
+              </span>
+              <span className="text-[#005049] font-bold text-[11px]">Autopilot Active</span>
             </div>
 
             {/* Notifications Dropdown */}
@@ -319,12 +305,12 @@ export default function DashboardLayout() {
                   setNotificationsOpen(!notificationsOpen);
                   setProfileOpen(false);
                 }}
-                className="relative p-1.5 rounded-full bg-neutral-50 border border-neutral-200 text-neutral-700 hover:text-black hover:border-neutral-400 transition-colors focus:outline-none cursor-pointer"
+                className="relative p-2 rounded-xl bg-white border border-[#dce9ff] text-[#45464d] hover:text-[#0058be] hover:border-[#0058be] transition-colors focus:outline-none cursor-pointer shadow-xs"
                 aria-label="View Notifications"
               >
                 <Bell className="w-4 h-4" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-black text-white font-bold text-[10px] flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0058be] text-white font-bold text-[10px] flex items-center justify-center shadow-sm">
                     {unreadNotifications}
                   </span>
                 )}
@@ -332,14 +318,14 @@ export default function DashboardLayout() {
 
               {/* Notifications Menu */}
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-[calc(100vw-2.5rem)] sm:w-96 max-w-sm rounded-2xl bg-white border border-neutral-200 shadow-xl overflow-hidden z-50 animate-fadeIn font-sans">
-                  <div className="px-4 py-3.5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-2.5rem)] sm:w-96 max-w-sm rounded-2xl bg-white border border-[#e5eeff] shadow-xl overflow-hidden z-50 animate-fadeIn font-sans">
+                  <div className="px-4 py-3.5 border-b border-[#e5eeff] flex items-center justify-between bg-[#f8f9ff]">
                     <div className="flex items-center gap-2">
-                      <span className="font-heading font-semibold text-sm text-black">
-                        Notifications
+                      <span className="font-heading font-bold text-sm text-[#0b1c30]">
+                        Flow Telemetry Alerts
                       </span>
                       {unreadNotifications > 0 && (
-                        <Badge variant="primary" size="sm">
+                        <Badge variant="accent" size="sm">
                           {unreadNotifications} new
                         </Badge>
                       )}
@@ -347,33 +333,33 @@ export default function DashboardLayout() {
                     {unreadNotifications > 0 && (
                       <button
                         onClick={handleMarkAllRead}
-                        className="text-[11px] text-neutral-600 hover:text-black font-medium transition-colors cursor-pointer"
+                        className="text-[11px] text-[#0058be] hover:underline font-medium transition-colors cursor-pointer"
                       >
                         Mark all read
                       </button>
                     )}
                   </div>
 
-                  <div className="divide-y divide-neutral-100 max-h-80 overflow-y-auto">
+                  <div className="divide-y divide-[#e5eeff] max-h-80 overflow-y-auto">
                     {notificationsList.length === 0 ? (
-                      <div className="p-8 text-center text-xs text-neutral-500">
-                        No new notifications.
+                      <div className="p-8 text-center text-xs text-[#76777d]">
+                        No pending alerts. All workflows running smoothly.
                       </div>
                     ) : (
                       notificationsList.map((notif) => (
                         <div
                           key={notif.id}
-                          className="p-3.5 hover:bg-neutral-50 transition-colors flex items-start gap-3 cursor-pointer"
+                          className="p-3.5 hover:bg-[#f8f9ff] transition-colors flex items-start gap-3 cursor-pointer"
                         >
-                          <div className="w-2 h-2 rounded-full bg-black mt-1.5 shrink-0" />
-                          <div className="flex-1">
-                            <span className="font-semibold text-xs text-black block">
+                          <div className="w-2 h-2 rounded-full bg-[#0058be] mt-1.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <span className="font-semibold text-xs text-[#0b1c30] block truncate">
                               {notif.title}
                             </span>
-                            <p className="text-[11px] text-neutral-600 mt-0.5 leading-snug">
+                            <span className="text-[11px] text-[#45464d] block mt-0.5 leading-snug">
                               {notif.desc}
-                            </p>
-                            <span className="text-[10px] text-neutral-400 mt-1 block">
+                            </span>
+                            <span className="text-[10px] text-[#76777d] mt-1 block font-mono">
                               {notif.time}
                             </span>
                           </div>
@@ -381,74 +367,53 @@ export default function DashboardLayout() {
                       ))
                     )}
                   </div>
-
-                  <div className="px-4 py-2.5 border-t border-neutral-200 bg-neutral-50 text-center">
-                    <Link
-                      to="/dashboard/conversations"
-                      onClick={() => setNotificationsOpen(false)}
-                      className="text-xs text-black hover:underline font-medium"
-                    >
-                      View all conversations →
-                    </Link>
-                  </div>
                 </div>
               )}
             </div>
 
-            {/* Profile Avatar Dropdown */}
+            {/* User Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => {
                   setProfileOpen(!profileOpen);
                   setNotificationsOpen(false);
                 }}
-                className="flex items-center gap-2 p-1 sm:px-2 sm:py-1 rounded-full bg-neutral-50 border border-neutral-200 hover:border-neutral-400 transition-colors focus:outline-none cursor-pointer"
-                aria-label="User profile menu"
+                className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-[#eff4ff] transition-colors focus:outline-none cursor-pointer"
+                aria-label="User Profile"
               >
-                <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px] shadow-sm">
-                  SJ
+                <div className="w-8 h-8 rounded-xl bg-[#0b1c30] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  A
                 </div>
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-xs font-semibold text-black leading-none">
-                    Sarah Jenkins
+                <div className="hidden lg:flex flex-col text-left leading-tight">
+                  <span className="font-heading font-bold text-xs text-[#0b1c30]">
+                    Operations Admin
                   </span>
-                  <span className="text-[10px] text-neutral-500 leading-none mt-0.5">
-                    Owner
+                  <span className="text-[10px] text-[#0058be] font-semibold">
+                    admin@pravaah.ai
                   </span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 hidden sm:inline mr-1" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#76777d] hidden lg:block" />
               </button>
 
               {/* Profile Dropdown Menu */}
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-neutral-200 shadow-xl overflow-hidden z-50 animate-fadeIn font-sans">
-                  <div className="px-4 py-3 border-b border-neutral-200 bg-neutral-50">
-                    <div className="font-semibold text-xs text-black">
-                      Sarah Jenkins
-                    </div>
-                    <div className="text-[11px] text-neutral-500 truncate">
-                      sarah@demobusiness.com
-                    </div>
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-[#e5eeff] shadow-xl overflow-hidden z-50 animate-fadeIn font-sans">
+                  <div className="p-3 border-b border-[#e5eeff] bg-[#f8f9ff]">
+                    <span className="text-xs font-bold text-[#0b1c30] block">
+                      Operations Admin
+                    </span>
+                    <span className="text-[11px] text-[#76777d] block truncate">
+                      admin@pravaah.ai
+                    </span>
                   </div>
 
-                  <div className="py-1.5">
-                    <Link
-                      to="/dashboard/conversations"
-                      onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-neutral-700 hover:text-black hover:bg-neutral-100 transition-colors"
-                    >
-                      <MessageSquare className="w-4 h-4 text-neutral-500" />
-                      <span>Conversations</span>
-                    </Link>
-                  </div>
-
-                  <div className="border-t border-neutral-200 py-1.5">
+                  <div className="p-1">
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-neutral-700 hover:text-black hover:bg-neutral-100 transition-colors text-left cursor-pointer"
+                      className="w-full text-left px-3 py-2 text-xs text-[#ba1a1a] hover:bg-[#ffdad6]/40 rounded-xl transition-colors flex items-center gap-2 font-semibold cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4" />
-                      <span>Log Out</span>
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 </div>
@@ -464,7 +429,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* 4. Mobile Bottom Navigation Bar (< md screens) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-neutral-200 px-4 py-1.5 flex items-center justify-around">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-[#e5eeff] px-4 py-1.5 flex items-center justify-around">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -473,8 +438,8 @@ export default function DashboardLayout() {
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-1.5 px-4 rounded-lg text-[11px] font-medium transition-colors relative ${
                 isActive
-                  ? 'text-black font-semibold'
-                  : 'text-neutral-400 hover:text-neutral-700'
+                  ? 'text-[#0058be] font-bold'
+                  : 'text-[#76777d] hover:text-[#0b1c30]'
               }`
             }
           >
@@ -485,7 +450,7 @@ export default function DashboardLayout() {
                 </div>
                 <span className="mt-1">{item.name}</span>
                 {isActive && (
-                  <span className="w-1 h-1 rounded-full bg-black mt-0.5" />
+                  <span className="w-1 h-1 rounded-full bg-[#0058be] mt-0.5" />
                 )}
               </>
             )}

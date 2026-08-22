@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button, Input, Card, Badge } from '../components/ui';
+import { PravaahLogo } from '../components/common/PravaahLogo';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -96,19 +97,19 @@ export default function Signup() {
   const getPasswordStrength = () => {
     const p = formData.password;
     if (!p) return { score: 0, text: '', color: '' };
-    if (p.length < 8) return { score: 1, text: 'Too short', color: 'bg-neutral-400' };
+    if (p.length < 8) return { score: 1, text: 'Too short', color: 'bg-[#76777d]' };
     const hasNumber = /\d/.test(p);
     const hasSpecial = /[^A-Za-z0-9]/.test(p);
     const hasUpper = /[A-Z]/.test(p);
 
     const bonus = [hasNumber, hasSpecial, hasUpper].filter(Boolean).length;
     if (bonus >= 2 && p.length >= 10) {
-      return { score: 3, text: 'Strong', color: 'bg-black' };
+      return { score: 3, text: 'Strong', color: 'bg-[#0c9488]' };
     }
     if (bonus >= 1) {
-      return { score: 2, text: 'Good', color: 'bg-neutral-700' };
+      return { score: 2, text: 'Good', color: 'bg-[#0058be]' };
     }
-    return { score: 1, text: 'Weak', color: 'bg-neutral-400' };
+    return { score: 1, text: 'Weak', color: 'bg-[#76777d]' };
   };
 
   const strength = getPasswordStrength();
@@ -142,23 +143,18 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col justify-between selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] flex flex-col justify-between selection:bg-[#0058be] selection:text-white relative overflow-hidden font-sans">
       {/* Top Header */}
-      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between border-b border-neutral-100">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-heading font-bold text-lg text-black tracking-tight">
-            PRAVAAH
-          </span>
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between border-b border-[#e5eeff]">
+        <Link to="/" className="flex items-center group">
+          <PravaahLogo size="sm" showTagline={false} />
         </Link>
 
-        <div className="text-xs text-neutral-600">
+        <div className="text-xs text-[#45464d]">
           Already have an account?{' '}
           <Link
             to="/login"
-            className="text-black hover:underline font-semibold transition-colors ml-1"
+            className="text-[#0058be] hover:underline font-semibold transition-colors ml-1"
           >
             Sign in
           </Link>
@@ -167,15 +163,15 @@ export default function Signup() {
 
       {/* Main Content Area */}
       <main className="w-full max-w-xl mx-auto px-4 py-6 flex flex-col justify-center">
-        <Card variant="default" className="border-neutral-200 shadow-lg p-6 sm:p-8 bg-white">
+        <Card variant="default" className="border-[#e5eeff] shadow-[0_4px_12px_rgba(11,28,48,0.06)] p-6 sm:p-8 bg-white">
           <div className="text-center mb-6">
-            <Badge variant="secondary" dot pulse size="sm" className="mb-3">
+            <Badge variant="secondary" dot pulse size="sm" className="mb-3 border-[#d8e2ff]">
               14-Day Full Access Trial
             </Badge>
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-black tracking-tight">
+            <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
               Create your PRAVAAH workspace
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-[#45464d] leading-relaxed">
               Automate your customer inquiries, qualify leads, and book meetings 24/7.
             </p>
           </div>
@@ -191,7 +187,7 @@ export default function Signup() {
                 onChange={(e) => handleChange('businessName', e.target.value)}
                 onBlur={() => handleBlur('businessName')}
                 error={errors.businessName}
-                startIcon={<Building2 className="w-4 h-4" />}
+                startIcon={<Building2 className="w-4 h-4 text-[#0058be]" />}
                 required
               />
 
@@ -203,7 +199,7 @@ export default function Signup() {
                 onChange={(e) => handleChange('ownerName', e.target.value)}
                 onBlur={() => handleBlur('ownerName')}
                 error={errors.ownerName}
-                startIcon={<User className="w-4 h-4" />}
+                startIcon={<User className="w-4 h-4 text-[#0058be]" />}
                 required
               />
             </div>
@@ -218,7 +214,7 @@ export default function Signup() {
                 onChange={(e) => handleChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
                 error={errors.email}
-                startIcon={<Mail className="w-4 h-4" />}
+                startIcon={<Mail className="w-4 h-4 text-[#0058be]" />}
                 autoComplete="email"
                 required
               />
@@ -231,7 +227,7 @@ export default function Signup() {
                 onChange={(e) => handleChange('phone', e.target.value)}
                 onBlur={() => handleBlur('phone')}
                 error={errors.phone}
-                startIcon={<Phone className="w-4 h-4" />}
+                startIcon={<Phone className="w-4 h-4 text-[#0058be]" />}
                 autoComplete="tel"
                 required
               />
@@ -247,12 +243,12 @@ export default function Signup() {
                 onChange={(e) => handleChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
                 error={errors.password}
-                startIcon={<Lock className="w-4 h-4" />}
+                startIcon={<Lock className="w-4 h-4 text-[#0058be]" />}
                 endIcon={
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-neutral-500 hover:text-black focus:outline-none transition-colors p-1"
+                    className="text-[#76777d] hover:text-[#0b1c30] focus:outline-none transition-colors p-1"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
@@ -269,7 +265,7 @@ export default function Signup() {
               {/* Password Strength Indicator */}
               {formData.password && (
                 <div className="flex items-center gap-2 mt-1 px-1">
-                  <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden flex gap-1">
+                  <div className="flex-1 h-1.5 bg-[#eff4ff] rounded-full overflow-hidden flex gap-1">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         strength.score >= 1 ? strength.color : 'bg-transparent'
@@ -286,7 +282,7 @@ export default function Signup() {
                       } ${strength.score >= 3 ? 'w-1/3' : 'w-0'}`}
                     />
                   </div>
-                  <span className="text-[10px] font-medium text-neutral-600">
+                  <span className="text-[10px] font-medium text-[#45464d]">
                     {strength.text}
                   </span>
                 </div>
@@ -295,20 +291,20 @@ export default function Signup() {
 
             {/* Terms and Conditions */}
             <div className="pt-2">
-              <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-neutral-600">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-[#45464d]">
                 <input
                   type="checkbox"
                   checked={formData.agreedToTerms}
                   onChange={(e) => handleChange('agreedToTerms', e.target.checked)}
-                  className="w-4 h-4 mt-0.5 rounded border-neutral-300 accent-black"
+                  className="w-4 h-4 mt-0.5 rounded border-[#dce9ff] text-[#0058be] focus:ring-[#0058be]"
                 />
                 <span className="leading-snug">
                   I agree to the{' '}
-                  <a href="#" onClick={(e) => e.preventDefault()} className="text-black hover:underline font-medium">
+                  <a href="#" onClick={(e) => e.preventDefault()} className="text-[#0058be] hover:underline font-medium">
                     Terms of Service
                   </a>{' '}
                   and{' '}
-                  <a href="#" onClick={(e) => e.preventDefault()} className="text-black hover:underline font-medium">
+                  <a href="#" onClick={(e) => e.preventDefault()} className="text-[#0058be] hover:underline font-medium">
                     Privacy Policy
                   </a>
                   . No credit card required.
@@ -316,15 +312,16 @@ export default function Signup() {
               </label>
             </div>
 
-            {/* Submit Button with Disabled Pattern */}
+            {/* Submit Button */}
             <div className="mt-3">
               <Button
                 type="submit"
-                variant="primary"
+                variant="accent"
                 size="md"
                 fullWidth
                 disabled={!isFormValid}
                 isLoading={isLoading}
+                className="font-bold shadow-[0_4px_14px_rgba(0,88,190,0.25)]"
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Create Free Workspace
@@ -333,32 +330,32 @@ export default function Signup() {
           </form>
 
           {/* Trust Guarantees */}
-          <div className="mt-6 pt-5 border-t border-neutral-200 grid grid-cols-3 gap-2 text-center text-[11px] text-neutral-600">
+          <div className="mt-6 pt-5 border-t border-[#e5eeff] grid grid-cols-3 gap-2 text-center text-[11px] text-[#45464d]">
             <span className="flex items-center justify-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-black shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#0c9488] shrink-0" />
               14-day trial
             </span>
             <span className="flex items-center justify-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-black shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#0c9488] shrink-0" />
               Zero setup fees
             </span>
             <span className="flex items-center justify-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-black shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#0c9488] shrink-0" />
               Cancel anytime
             </span>
           </div>
         </Card>
 
         {/* Security badge */}
-        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-neutral-600 text-center">
-          <ShieldCheck className="w-4 h-4 text-black" />
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#76777d] text-center">
+          <ShieldCheck className="w-4 h-4 text-[#0058be]" />
           <span>SOC-2 certified security & encrypted data handling</span>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-neutral-500 border-t border-neutral-100">
-        © {new Date().getFullYear()} PRAVAAH Technologies, Inc. All rights reserved.
+      <footer className="py-6 text-center text-xs text-[#76777d] border-t border-[#e5eeff]">
+        © {new Date().getFullYear()} Pravaah Technologies Inc. All rights reserved.
       </footer>
     </div>
   );

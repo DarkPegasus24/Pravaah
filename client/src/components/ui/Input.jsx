@@ -28,7 +28,7 @@ export const Input = forwardRef(function Input(
       {label && (
         <label
           htmlFor={inputId}
-          className="text-xs font-medium text-neutral-700 select-none flex items-center justify-between"
+          className="text-xs font-semibold text-[#0b1c30] select-none flex items-center justify-between"
         >
           <span>{label}</span>
         </label>
@@ -36,7 +36,7 @@ export const Input = forwardRef(function Input(
 
       <div className="relative flex items-center w-full">
         {startIcon && (
-          <div className="absolute left-3 flex items-center justify-center pointer-events-none text-neutral-400">
+          <div className="absolute left-3 flex items-center justify-center pointer-events-none text-[#76777d]">
             {startIcon}
           </div>
         )}
@@ -45,10 +45,10 @@ export const Input = forwardRef(function Input(
           ref={ref}
           id={inputId}
           disabled={disabled}
-          className={`w-full bg-white text-black placeholder:text-neutral-400 border transition-all duration-200 focus:outline-none focus:ring-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+          className={`w-full bg-white text-[#0b1c30] placeholder:text-[#76777d] border transition-all duration-200 focus:outline-none focus:ring-2 disabled:opacity-40 disabled:cursor-not-allowed ${
             error
-              ? 'border-black focus:border-black focus:ring-black/20'
-              : 'border-neutral-300 hover:border-neutral-500 focus:border-black focus:ring-black/15'
+              ? 'border-[#ba1a1a] focus:border-[#ba1a1a] focus:ring-[#ba1a1a]/20'
+              : 'border-[#dce9ff] hover:border-[#76777d] focus:border-[#0058be] focus:ring-[#0058be]/20'
           } ${sizeClasses[size] || sizeClasses.md} ${
             startIcon ? 'pl-9' : ''
           } ${endIcon ? 'pr-9' : ''} ${className}`}
@@ -56,18 +56,18 @@ export const Input = forwardRef(function Input(
         />
 
         {endIcon && (
-          <div className="absolute right-3 flex items-center justify-center text-neutral-400">
+          <div className="absolute right-3 flex items-center justify-center text-[#76777d]">
             {endIcon}
           </div>
         )}
       </div>
 
       {error ? (
-        <p className="text-xs text-neutral-900 font-medium flex items-center gap-1 mt-0.5 animate-fadeIn">
+        <p className="text-xs text-[#ba1a1a] font-medium flex items-center gap-1 mt-0.5 animate-fadeIn">
           <span>{error}</span>
         </p>
       ) : helperText ? (
-        <p className="text-xs text-neutral-500 mt-0.5">{helperText}</p>
+        <p className="text-xs text-[#45464d] mt-0.5">{helperText}</p>
       ) : null}
     </div>
   );

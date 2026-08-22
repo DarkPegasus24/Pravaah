@@ -10,3 +10,4 @@ export {
   default as CardDefault,
 } from './Card';
 export { Badge, default as BadgeDefault } from './Badge';
+export { Modal, default as ModalDefault } from './Modal';

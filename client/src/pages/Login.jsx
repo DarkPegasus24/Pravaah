@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Button, Input, Card, Badge } from '../components/ui';
+import { PravaahLogo } from '../components/common/PravaahLogo';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -76,23 +77,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col justify-between selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] flex flex-col justify-between selection:bg-[#0058be] selection:text-white relative overflow-hidden font-sans">
       {/* Top Simple Nav */}
-      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between border-b border-neutral-100">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-heading font-bold text-lg text-black tracking-tight">
-            PRAVAAH
-          </span>
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between border-b border-[#e5eeff]">
+        <Link to="/" className="flex items-center group">
+          <PravaahLogo size="sm" showTagline={false} />
         </Link>
 
-        <div className="text-xs text-neutral-600">
+        <div className="text-xs text-[#45464d]">
           New to Pravaah?{' '}
           <Link
             to="/signup"
-            className="text-black hover:underline font-semibold transition-colors ml-1"
+            className="text-[#0058be] hover:underline font-semibold transition-colors ml-1"
           >
             Create an account
           </Link>
@@ -101,15 +97,15 @@ export default function Login() {
 
       {/* Main Content Area */}
       <main className="w-full max-w-md mx-auto px-4 py-8 flex flex-col justify-center">
-        <Card variant="default" className="border-neutral-200 shadow-lg p-6 sm:p-8 bg-white">
+        <Card variant="default" className="border-[#e5eeff] shadow-[0_4px_12px_rgba(11,28,48,0.06)] p-6 sm:p-8 bg-white">
           <div className="text-center mb-8">
-            <Badge variant="secondary" dot pulse size="sm" className="mb-3">
+            <Badge variant="secondary" dot pulse size="sm" className="mb-3 border-[#d8e2ff]">
               Secure Sign In
             </Badge>
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-black tracking-tight">
+            <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
               Welcome back
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-[#45464d] leading-relaxed">
               Enter your credentials to access your autonomous revenue dashboard.
             </p>
           </div>
@@ -143,7 +139,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-neutral-500 hover:text-black focus:outline-none transition-colors p-1"
+                  className="text-[#76777d] hover:text-[#0b1c30] focus:outline-none transition-colors p-1"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -159,63 +155,79 @@ export default function Login() {
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-neutral-600 hover:text-black">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-[#45464d] hover:text-[#0b1c30]">
                 <input
                   type="checkbox"
                   checked={formData.rememberMe}
                   onChange={(e) => handleChange('rememberMe', e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-neutral-300 accent-black"
+                  className="rounded border-[#dce9ff] text-[#0058be] focus:ring-[#0058be] h-4 w-4"
                 />
-                <span>Remember me</span>
+                <span>Remember this browser</span>
               </label>
 
               <a
                 href="#"
-                onClick={(e) => e.preventDefault()}
-                className="text-neutral-600 hover:text-black transition-colors font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('Demo reset instructions sent to your email.');
+                }}
+                className="text-[#0058be] hover:underline transition-colors font-medium"
               >
                 Forgot password?
               </a>
             </div>
 
             {/* Submit Button */}
-            <div className="mt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                fullWidth
-                disabled={!isFormValid}
-                isLoading={isLoading}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Dashboard
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              variant="accent"
+              fullWidth
+              size="md"
+              isLoading={isLoading}
+              className="mt-2 text-sm font-bold shadow-[0_4px_14px_rgba(0,88,190,0.25)]"
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+            >
+              Sign in to Workspace
+            </Button>
           </form>
 
-          {/* Alternate Signup Prompt */}
-          <div className="mt-6 pt-6 border-t border-neutral-200 text-center text-xs text-neutral-600">
-            Don't have an account yet?{' '}
-            <Link
-              to="/signup"
-              className="text-black hover:underline font-semibold transition-colors"
-            >
-              Start 14-day free trial
-            </Link>
+          {/* Single Sign-On Demo Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#e5eeff]" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-[#76777d] font-mono text-[10px]">
+                Demo Quick Access
+              </span>
+            </div>
           </div>
-        </Card>
 
-        {/* Security Badge */}
-        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-neutral-600 text-center">
-          <ShieldCheck className="w-4 h-4 text-black" />
-          <span>256-bit SSL encrypted & GDPR compliant</span>
-        </div>
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            size="sm"
+            onClick={() => {
+              handleChange('email', 'admin@pravah.ai');
+              handleChange('password', 'Pravaah2026!');
+            }}
+            className="text-xs text-[#0058be] font-medium border-[#d8e2ff] bg-[#eff4ff] hover:bg-[#d8e2ff]"
+          >
+            Auto-Fill Demo Admin Account
+          </Button>
+        </Card>
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-neutral-500 border-t border-neutral-100">
-        © {new Date().getFullYear()} PRAVAAH Technologies, Inc. All rights reserved.
+      <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-[#e5eeff] flex flex-col sm:flex-row items-center justify-between text-xs text-[#76777d] gap-2">
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-[#0058be]" />
+          <span>256-bit SSL Encrypted & SOC-2 Verified</span>
+        </div>
+        <div>
+          <span>© {new Date().getFullYear()} Pravaah Technologies Inc.</span>
+        </div>
       </footer>
     </div>
   );
