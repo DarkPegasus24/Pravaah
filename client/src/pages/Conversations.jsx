@@ -1,112 +1,208 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Search,
   Send,
-  Sparkles,
-  Bot,
   Smartphone,
   Globe,
   MessageSquare,
-  Calendar,
   Paperclip,
   CheckCheck,
   Building2,
-  Zap,
   ArrowLeft,
   ShieldCheck,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { Button, Input, Card, Badge } from '../components/ui';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Conversations() {
-  // Empty state by default for backend wiring
   const [conversations, setConversations] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [inputMessage, setInputMessage] = useState('');
   const [mobileChatView, setMobileChatView] = useState(false);
 
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [conversationsError, setConversationsError] = useState(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [messagesError, setMessagesError] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+
   const chatEndRef = useRef(null);
+
+  // Fetch all conversations from Supabase
+  const fetchConversations = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setIsLoadingConversations(true);
+    }
+    setConversationsError(null);
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formatted = (data || []).map((conv) => ({
+        id: conv.id,
+        name: conv.customer_name || 'Customer',
+        customer_name: conv.customer_name,
+        customer_contact: conv.customer_contact,
+        company: conv.company || conv.customer_contact || 'Direct Inquiry',
+        status: conv.status || 'Open',
+        channel: conv.channel || 'Direct Web',
+        channelType: conv.channel_type || 'web',
+        updated_at: conv.updated_at,
+        created_at: conv.created_at,
+        unreadCount: 0,
+        avatar: conv.customer_name ? conv.customer_name.slice(0, 2).toUpperCase() : 'CU',
+      }));
+
+      setConversations(formatted);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setConversationsError('Failed to load conversations');
+    } finally {
+      if (isInitial) {
+        setIsLoadingConversations(false);
+      }
+    }
+  }, []);
+
+  // Fetch conversations on mount
+  useEffect(() => {
+    fetchConversations(true);
+  }, [fetchConversations]);
 
   const activeConversation =
     conversations.find((c) => c.id === selectedId) || null;
 
   // Scroll chat to bottom when messages update
   useEffect(() => {
-    if (activeConversation?.messages) {
+    if (messages.length > 0) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [activeConversation?.messages]);
+  }, [messages]);
+
+  // Load messages helper
+  const loadMessages = useCallback(async (convId, showSpinner = false) => {
+    if (!convId) {
+      setMessages([]);
+      return [];
+    }
+
+    if (showSpinner) {
+      setIsLoadingMessages(true);
+    }
+    setMessagesError(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', convId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+      setMessagesError('Failed to load messages');
+      return [];
+    } finally {
+      if (showSpinner) {
+        setIsLoadingMessages(false);
+      }
+    }
+  }, []);
+
+  // Fetch messages and subscribe to realtime updates when selectedId changes
+  useEffect(() => {
+    if (!selectedId) {
+      setMessages([]);
+      return;
+    }
+
+    let isMounted = true;
+    loadMessages(selectedId, true);
+
+    // Subscribe to realtime postgres_changes for this conversation's messages
+    const channelName = `messages:conv:${selectedId}-${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${selectedId}`,
+        },
+        (payload) => {
+          if (payload.new && isMounted) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === payload.new.id)) {
+                return prev;
+              }
+              return [...prev, payload.new];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [selectedId, loadMessages]);
 
   const handleSelectConversation = (id) => {
     setSelectedId(id);
     setMobileChatView(true);
-    // Mark as read
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
     );
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e?.preventDefault();
-    if (!inputMessage.trim() || !selectedId) return;
+    const textToSend = inputMessage.trim();
+    if (!textToSend || !selectedId || isSending) return;
 
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'agent',
-      senderName: 'Agent',
-      text: inputMessage.trim(),
-      timestamp: 'Just now',
-    };
-
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === selectedId) {
-          return {
-            ...c,
-            messages: [...(c.messages || []), newMessage],
-          };
-        }
-        return c;
-      })
-    );
-
+    setIsSending(true);
+    setMessagesError(null);
     setInputMessage('');
-  };
 
-  const handleSendQuickReply = (text) => {
-    if (!selectedId) return;
+    try {
+      // Step a: Invoke deployed Supabase Edge Function 'ai-agent'
+      const { error: fnError } = await supabase.functions.invoke('ai-agent', {
+        body: {
+          conversation_id: selectedId,
+          customer_message: textToSend,
+        },
+      });
 
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'ai',
-      senderName: 'PRAVAAH Autopilot',
-      text: text,
-      timestamp: 'Just now',
-    };
+      if (fnError) {
+        throw fnError;
+      }
 
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === selectedId) {
-          return {
-            ...c,
-            messages: [...(c.messages || []), newMessage],
-          };
-        }
-        return c;
-      })
-    );
-  };
+      // Step b: Refetch messages so both the customer message and AI business reply appear
+      await loadMessages(selectedId, false);
 
-  const toggleAutopilot = () => {
-    if (!selectedId) return;
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedId
-          ? { ...c, autopilotEnabled: !c.autopilotEnabled }
-          : c
-      )
-    );
+      // Update conversations list timestamps
+      await fetchConversations(false);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setMessagesError(err.message || 'Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // Filter conversations
@@ -114,14 +210,11 @@ export default function Conversations() {
     const matchesSearch =
       c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.messages?.some((m) =>
-        m.text?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      c.customer_contact?.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (filterStatus === 'all') return matchesSearch;
-    if (filterStatus === 'unread') return matchesSearch && c.unreadCount > 0;
-    if (filterStatus === 'booked') return matchesSearch && c.status === 'Meeting Booked';
-    if (filterStatus === 'qualified') return matchesSearch && c.status === 'Qualified';
+    if (filterStatus === 'booked') return matchesSearch && c.status?.toLowerCase() === 'booked';
+    if (filterStatus === 'qualified') return matchesSearch && c.status?.toLowerCase() === 'qualified';
     return matchesSearch;
   });
 
@@ -175,7 +268,7 @@ export default function Conversations() {
           {/* Search and Filters */}
           <div className="p-3.5 border-b border-neutral-200 flex flex-col gap-2.5 bg-neutral-50">
             <Input
-              placeholder="Search leads, companies..."
+              placeholder="Search leads, contacts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="sm"
@@ -218,9 +311,22 @@ export default function Conversations() {
             </div>
           </div>
 
-          {/* Scrollable Conversation List / Empty State */}
+          {/* Inline Error Notice */}
+          {conversationsError && (
+            <div className="p-2.5 bg-red-50 border-b border-red-200 flex items-center gap-2 text-xs text-red-700">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{conversationsError}</span>
+            </div>
+          )}
+
+          {/* Scrollable Conversation List / Empty State / Loading State */}
           <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 flex flex-col">
-            {filteredConversations.length === 0 ? (
+            {isLoadingConversations ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                <span className="text-xs text-neutral-500">Loading conversations...</span>
+              </div>
+            ) : filteredConversations.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-2">
                 <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-400">
                   <MessageSquare className="w-5 h-5" />
@@ -233,7 +339,9 @@ export default function Conversations() {
             ) : (
               filteredConversations.map((conv) => {
                 const isSelected = conv.id === selectedId;
-                const lastMsg = conv.messages?.[conv.messages.length - 1];
+                const formattedTime = conv.updated_at
+                  ? new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : 'Recent';
 
                 return (
                   <div
@@ -247,7 +355,7 @@ export default function Conversations() {
                   >
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-center font-bold text-xs text-black shrink-0 group-hover:border-black transition-colors">
-                      {conv.avatar || conv.name?.slice(0, 2).toUpperCase() || 'CU'}
+                      {conv.avatar || 'CU'}
                     </div>
 
                     {/* Content preview */}
@@ -261,7 +369,7 @@ export default function Conversations() {
                           {conv.name}
                         </span>
                         <span className="text-[10px] text-neutral-500 shrink-0">
-                          {lastMsg?.timestamp?.replace('Today, ', '') || 'Recent'}
+                          {formattedTime}
                         </span>
                       </div>
 
@@ -273,29 +381,14 @@ export default function Conversations() {
                         </span>
                       </div>
 
-                      <p className="text-xs text-neutral-600 truncate leading-snug">
-                        {lastMsg?.text || 'No messages yet'}
-                      </p>
-
                       <div className="flex items-center justify-between mt-2">
                         {conv.status && (
-                          <Badge variant={conv.statusVariant || 'secondary'} size="sm">
+                          <Badge variant="secondary" size="sm">
                             {conv.status}
                           </Badge>
                         )}
-
-                        {conv.intentScore && (
-                          <span className="text-[10px] font-mono text-neutral-700 font-semibold">
-                            {conv.intentScore}% Intent
-                          </span>
-                        )}
                       </div>
                     </div>
-
-                    {/* Unread indicator */}
-                    {conv.unreadCount > 0 && (
-                      <span className="w-2 h-2 rounded-full bg-black absolute right-3 top-3.5" />
-                    )}
                   </div>
                 );
               })
@@ -324,7 +417,7 @@ export default function Conversations() {
                   </button>
 
                   <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                    {activeConversation.avatar || activeConversation.name?.slice(0, 2).toUpperCase() || 'CU'}
+                    {activeConversation.avatar || 'CU'}
                   </div>
 
                   <div className="min-w-0">
@@ -333,7 +426,7 @@ export default function Conversations() {
                         {activeConversation.name}
                       </h2>
                       {activeConversation.status && (
-                        <Badge variant={activeConversation.statusVariant || 'secondary'} size="sm">
+                        <Badge variant="secondary" size="sm">
                           {activeConversation.status}
                         </Badge>
                       )}
@@ -356,7 +449,7 @@ export default function Conversations() {
                   </div>
                 </div>
 
-                {/* Right Action: Autopilot Mode Toggle */}
+                {/* TODO: re-enable when building this feature
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={toggleAutopilot}
@@ -381,6 +474,7 @@ export default function Conversations() {
                     </span>
                   </button>
                 </div>
+                */}
               </div>
 
               {/* Chat Messages Body */}
@@ -392,77 +486,75 @@ export default function Conversations() {
                   </span>
                 </div>
 
-                {(activeConversation.messages || []).map((msg) => {
-                  const isCustomer = msg.sender === 'customer';
-                  const isAI = msg.sender === 'ai';
+                {/* Inline Error Notice for Messages */}
+                {messagesError && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                    <span>{messagesError}</span>
+                  </div>
+                )}
 
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${
-                        isCustomer ? 'self-start' : 'self-end items-end'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-neutral-500">
-                        {isAI ? (
-                          <span className="flex items-center gap-1 text-black font-semibold">
-                            <Bot className="w-3 h-3 text-black" />
-                            {msg.senderName || 'PRAVAAH AI'}
-                          </span>
-                        ) : isCustomer ? (
-                          <span className="font-semibold text-black">
-                            {msg.senderName || activeConversation.name}
-                          </span>
-                        ) : (
-                          <span className="text-black font-medium">
-                            {msg.senderName || 'Agent'}
-                          </span>
-                        )}
-                        <span>•</span>
-                        <span>{msg.timestamp || 'Now'}</span>
-                      </div>
+                {isLoadingMessages ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                    <span className="text-xs text-neutral-500">Loading messages...</span>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-2">
+                    <span className="text-xs text-neutral-400">No messages in this conversation yet.</span>
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isCustomer = msg.sender_type === 'customer';
+                    const timeString = msg.created_at
+                      ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : 'Now';
 
+                    return (
                       <div
-                        className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                          isCustomer
-                            ? 'bg-neutral-100 text-black border border-neutral-200 rounded-tl-sm shadow-xs'
-                            : isAI
-                            ? 'bg-neutral-900 text-white border border-black shadow-sm rounded-tr-sm'
-                            : 'bg-black text-white font-semibold rounded-tr-sm shadow-md'
+                        key={msg.id}
+                        className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${
+                          isCustomer ? 'self-start' : 'self-end items-end'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                        <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-neutral-500">
+                          {isCustomer ? (
+                            <span className="font-semibold text-black">
+                              {activeConversation.name}
+                            </span>
+                          ) : (
+                            <span className="text-black font-semibold">
+                              PRAVAAH
+                            </span>
+                          )}
+                          <span>•</span>
+                          <span>{timeString}</span>
+                        </div>
 
-                        {msg.isBookingConfirmed && (
-                          <div className="mt-3 p-2.5 rounded-xl bg-white text-black border border-neutral-300 flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-neutral-100 text-black shrink-0 border border-neutral-200">
-                              <Calendar className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <span className="font-semibold text-black block text-[11px]">
-                                Demo Appointment Booked
-                              </span>
-                              <span className="text-[10px] text-neutral-600">
-                                Calendar invite & confirmation sent
-                              </span>
-                            </div>
+                        <div
+                          className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                            isCustomer
+                              ? 'bg-neutral-100 text-black border border-neutral-200 rounded-tl-sm shadow-xs'
+                              : 'bg-black text-white font-medium rounded-tr-sm shadow-md'
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+
+                        {!isCustomer && (
+                          <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-neutral-500">
+                            <CheckCheck className="w-3 h-3 text-black" />
+                            <span>Delivered</span>
                           </div>
                         )}
                       </div>
-
-                      {!isCustomer && (
-                        <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-neutral-500">
-                          <CheckCheck className="w-3 h-3 text-black" />
-                          <span>Delivered</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
                 <div ref={chatEndRef} />
               </div>
 
-              {/* AI Quick Suggestion Chips */}
+              {/* TODO: re-enable when building this feature
               <div className="px-4 py-2 bg-neutral-50 border-t border-neutral-200 flex items-center gap-2 overflow-x-auto">
                 <span className="text-[10px] font-semibold uppercase text-black shrink-0 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-black" /> Quick AI Reply:
@@ -488,6 +580,7 @@ export default function Conversations() {
                   📄 Send Pricing Sheet
                 </button>
               </div>
+              */}
 
               {/* Message Input Box Footer */}
               <form
@@ -505,20 +598,25 @@ export default function Conversations() {
 
                 <input
                   type="text"
-                  placeholder={`Reply to ${activeConversation.name} as Agent...`}
+                  placeholder={`Reply to ${activeConversation.name}...`}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  className="flex-1 bg-white text-black placeholder:text-neutral-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-black focus:outline-none transition-colors"
+                  disabled={isSending}
+                  className="flex-1 bg-white text-black placeholder:text-neutral-400 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-neutral-300 focus:border-black focus:outline-none transition-colors disabled:opacity-60"
                 />
 
                 <Button
                   type="submit"
                   variant="primary"
                   size="sm"
-                  disabled={!inputMessage.trim()}
+                  disabled={!inputMessage.trim() || isSending}
                   className="px-4 py-2 shrink-0"
                 >
-                  <Send className="w-4 h-4" />
+                  {isSending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </form>
             </>
@@ -543,3 +641,4 @@ export default function Conversations() {
     </div>
   );
 }
+
