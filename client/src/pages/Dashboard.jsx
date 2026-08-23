@@ -11,6 +11,7 @@ import {
   PhoneCall,
   Sparkles,
   BarChart3,
+  Target,
 } from 'lucide-react';
 import {
   Card,
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const [totalConversations, setTotalConversations] = useState(0);
   const [newTodayCount, setNewTodayCount] = useState(0);
   const [totalMessages, setTotalMessages] = useState(0);
+  const [totalLeads, setTotalLeads] = useState(0);
   const [recentConversations, setRecentConversations] = useState([]);
   const [weeklyActivity, setWeeklyActivity] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +56,7 @@ export default function Dashboard() {
           totalConvRes,
           newTodayRes,
           totalMsgRes,
+          totalLeadsRes,
           recentConvRes,
           weeklyConvRes,
         ] = await Promise.all([
@@ -66,13 +69,15 @@ export default function Dashboard() {
             .gte('created_at', startOfTodayISO),
           // 3. Total messages count
           supabase.from('messages').select('*', { count: 'exact', head: true }),
-          // 4. 5 most recent conversations
+          // 4. Total leads count
+          supabase.from('leads').select('*', { count: 'exact', head: true }),
+          // 5. 5 most recent conversations
           supabase
             .from('conversations')
             .select('id, customer_name, customer_contact, status, updated_at, channel, call_duration')
             .order('updated_at', { ascending: false })
             .limit(5),
-          // 5. Created timestamps for the last 7 days to build real activity bar
+          // 6. Created timestamps for the last 7 days to build real activity bar
           supabase
             .from('conversations')
             .select('created_at')
@@ -91,6 +96,10 @@ export default function Dashboard() {
 
         if (!totalMsgRes.error) {
           setTotalMessages(totalMsgRes.count || 0);
+        }
+
+        if (!totalLeadsRes.error) {
+          setTotalLeads(totalLeadsRes.count || 0);
         }
 
         if (!recentConvRes.error && recentConvRes.data) {
@@ -519,27 +528,31 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Action 3: CRM & Pipeline Integration (Coming Soon) */}
-          <div className="p-5 rounded-2xl bg-white/70 border border-[#e5eeff] opacity-85 flex flex-col justify-between gap-4">
+          {/* Action 3: CRM Leads Pipeline (Active) */}
+          <div
+            onClick={() => navigate('/dashboard/leads')}
+            className="p-5 rounded-2xl bg-white border border-[#dce9ff] hover:border-[#0058be] hover:shadow-md transition-all flex flex-col justify-between gap-4 cursor-pointer group"
+          >
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#f8f9ff] text-[#76777d] flex items-center justify-center border border-[#e5eeff]">
-                  <Sparkles className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center border border-[#d8e2ff]">
+                  <Target className="w-5 h-5" />
                 </div>
-                <Badge variant="secondary" size="sm" className="bg-[#eff4ff] text-[#0058be] border-[#d8e2ff] text-[10px]">
-                  Coming Soon
+                <Badge variant="success" size="sm" className="text-[10px]">
+                  Active CRM {totalLeads > 0 ? `(${totalLeads})` : ''}
                 </Badge>
               </div>
-              <h3 className="font-heading font-bold text-sm text-[#45464d]">
+              <h3 className="font-heading font-bold text-sm text-[#0b1c30] group-hover:text-[#0058be] transition-colors">
                 CRM Lead Enrichment
               </h3>
-              <p className="text-xs text-[#76777d] mt-1 leading-relaxed">
-                Automatic customer data enrichment, meeting scheduler sync, and continuous pipeline automation.
+              <p className="text-xs text-[#45464d] mt-1 leading-relaxed">
+                Automatic customer data enrichment, meeting scheduler sync, and continuous pipeline automation from AI conversations.
               </p>
             </div>
 
-            <div className="pt-3 border-t border-[#e5eeff] text-[11px] font-semibold text-[#76777d]">
-              Phase 3 Roadmap • Planned Integration
+            <div className="pt-3 border-t border-[#e5eeff] flex items-center justify-between text-xs font-semibold text-[#0058be]">
+              <span>Open Leads Pipeline</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>
