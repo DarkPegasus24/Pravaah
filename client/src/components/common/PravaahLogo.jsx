@@ -10,12 +10,12 @@ export function PravaahLogo({
 }) {
   // Size dimensions
   const dimensions = {
-    xs: { img: 'w-6 h-6', text: 'text-sm', tag: 'text-[7px]', gap: 'gap-1.5' },
-    sm: { img: 'w-7 h-7', text: 'text-base', tag: 'text-[8px]', gap: 'gap-2' },
-    md: { img: 'w-8 h-8', text: 'text-lg', tag: 'text-[9px]', gap: 'gap-2.5' },
-    lg: { img: 'w-10 h-10', text: 'text-xl', tag: 'text-[10px]', gap: 'gap-3' },
-    xl: { img: 'w-12 h-12', text: 'text-2xl', tag: 'text-[11px]', gap: 'gap-3.5' },
-  }[size] || { img: 'w-8 h-8', text: 'text-lg', tag: 'text-[9px]', gap: 'gap-2.5' };
+    xs: { img: 'w-7 h-7', text: 'text-sm', tag: 'text-[7.5px]', gap: 'gap-2' },
+    sm: { img: 'w-9 h-9', text: 'text-[17px]', tag: 'text-[8.5px]', gap: 'gap-2.5' },
+    md: { img: 'w-11 h-11', text: 'text-lg', tag: 'text-[9.5px]', gap: 'gap-3' },
+    lg: { img: 'w-13 h-13', text: 'text-xl', tag: 'text-[10.5px]', gap: 'gap-3.5' },
+    xl: { img: 'w-16 h-16', text: 'text-2xl', tag: 'text-[12px]', gap: 'gap-4' },
+  }[size] || { img: 'w-9 h-9', text: 'text-[17px]', tag: 'text-[8.5px]', gap: 'gap-2.5' };
 
   if (iconOnly) {
     return (
@@ -23,7 +23,7 @@ export function PravaahLogo({
         <img
           src={pravaahLogoImg}
           alt="Pravaah Icon"
-          className={`${dimensions.img} rounded-xl object-contain shadow-xs`}
+          className={`${dimensions.img} object-contain`}
         />
       </div>
     );
@@ -31,15 +31,13 @@ export function PravaahLogo({
 
   return (
     <div className={`inline-flex items-center ${dimensions.gap} select-none group ${className}`}>
-      {/* Dynamic Star/Comet Logo Mark */}
+      {/* Clean Logo Mark */}
       <div className="relative shrink-0 flex items-center justify-center">
-        <div className="w-8.5 h-8.5 rounded-xl bg-black flex items-center justify-center overflow-hidden shadow-sm p-0.5 group-hover:scale-105 transition-transform duration-200">
-          <img
-            src={pravaahLogoImg}
-            alt="Pravaah Logo"
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
+        <img
+          src={pravaahLogoImg}
+          alt="Pravaah Logo"
+          className={`${dimensions.img} object-contain group-hover:scale-105 transition-transform duration-200`}
+        />
       </div>
 
       {/* Typography: Wordmark + Optional Tagline */}
