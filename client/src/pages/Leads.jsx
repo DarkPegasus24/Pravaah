@@ -15,6 +15,7 @@ import {
   Badge,
   Button,
 } from '../components/ui';
+import LeadsShowcase from '../components/leads/LeadsShowcase';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Leads() {
@@ -240,6 +241,9 @@ export default function Leads() {
           </div>
         </div>
       </div>
+
+      {/* AI Lead Generation Preview / Showcase */}
+      <LeadsShowcase />
 
       {/* 3. Main Data Card with Filter Bar & Table */}
       <div className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs overflow-hidden flex flex-col">
