@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  Target,
   MessageSquare,
   Phone,
+  Mail,
+  MessageCircle,
+  Smartphone,
   Bell,
   Menu,
   X,
@@ -42,6 +46,11 @@ export default function DashboardLayout() {
       end: true,
     },
     {
+      name: 'Leads',
+      path: '/dashboard/leads',
+      icon: <Target className="w-5 h-5" />,
+    },
+    {
       name: 'Conversations',
       path: '/dashboard/conversations',
       icon: <MessageSquare className="w-5 h-5" />,
@@ -50,6 +59,21 @@ export default function DashboardLayout() {
       name: 'Calling',
       path: '/dashboard/calling',
       icon: <Phone className="w-5 h-5" />,
+    },
+    {
+      name: 'Email',
+      path: '/dashboard/email',
+      icon: <Mail className="w-5 h-5" />,
+    },
+    {
+      name: 'WhatsApp',
+      path: '/dashboard/whatsapp',
+      icon: <MessageCircle className="w-5 h-5" />,
+    },
+    {
+      name: 'SMS',
+      path: '/dashboard/sms',
+      icon: <Smartphone className="w-5 h-5" />,
     },
   ];
 

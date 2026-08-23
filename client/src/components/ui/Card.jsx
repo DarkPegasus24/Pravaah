@@ -8,6 +8,7 @@ const cardVariants = {
   glass:
     'bg-white/95 backdrop-blur-md border border-[#dce9ff] text-[#0b1c30] shadow-[0_1px_3px_rgba(11,28,48,0.05)]',
   flat: 'bg-[#f8f9ff] border border-[#e5eeff] text-[#0b1c30]',
+  dark: 'bg-[#071322] border border-[#1a2f4c] text-white shadow-2xl',
 };
 
 export function Card({

@@ -98,7 +98,7 @@ export function ArchitectureShowcase() {
   const currentStage = STAGES[activeStageIndex];
 
   return (
-    <section className="py-20 bg-[#f8f9ff]/70 border-y border-[#e5eeff] font-sans">
+    <section className="py-20 bg-white font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
