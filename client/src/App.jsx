@@ -13,6 +13,7 @@ import Email from './pages/Email';
 import WhatsApp from './pages/WhatsApp';
 import Sms from './pages/Sms';
 import Docs from './pages/Docs';
+import OmniVoiceWidget from './components/common/OmniVoiceWidget';
 
 export default function App() {
   return (
@@ -37,6 +38,8 @@ export default function App() {
           <Route path="sms" element={<Sms />} />
         </Route>
       </Routes>
+      {/* Global OmniDimension Voice Agent Trigger */}
+      <OmniVoiceWidget />
     </BrowserRouter>
   );
 }

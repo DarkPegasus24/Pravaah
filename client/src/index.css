@@ -164,4 +164,16 @@ body {
 
 .animate-pulseGlow {
   animation: pulseGlow 2.5s infinite;
-}
+}
+
+/* Hide OmniDimension default chat launcher bubble */
+#omnidimension-launcher-wrapper,
+#omnidim-widget-launcher,
+.omnidim-launcher-btn,
+.omnidim-chat-bubble,
+#omnidimension-widget-button,
+#omnidim-launcher,
+[id^="omnidimension-launcher"] {
+  display: none !important;
+}
+
